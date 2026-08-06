@@ -107,7 +107,7 @@ function previewImage(event) {
     }
 }
 
-// 呼叫 Gemini 2.5 Flash 辨識食物
+// 呼叫 Gemini 1.5 Flash 辨識食物 (最新防錯修正版)
 async function analyzeFoodImage() {
     const apiKey = document.getElementById('api-key').value.trim();
     if (!apiKey) return alert("請輸入 Gemini API Key！");
@@ -124,7 +124,7 @@ async function analyzeFoodImage() {
 }`;
 
     try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -284,7 +284,7 @@ ${JSON.stringify(monthLogs, null, 2)}
 請分析其飲食習慣，給予 300 字左右的月度健康診斷報告，包含優點、改進建議與下個月的飲食目標調整建議。`;
 
     try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
