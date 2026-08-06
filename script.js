@@ -82,7 +82,7 @@ function calculateHealth() {
     const tdee = Math.round(bmr * activity);
     document.getElementById('tdee-val').innerText = tdee;
 
-    // 設定目標 (預設為維持體重 TDEE)
+    // 設定目標
     const targetCal = tdee;
     document.getElementById('target-cal').innerText = targetCal;
 
@@ -100,14 +100,13 @@ function previewImage(event) {
         reader.onload = function(e) {
             document.getElementById('image-preview').src = e.target.result;
             document.getElementById('image-preview-container').style.display = 'block';
-            // 擷取 Base64 純數據字串
             base64Image = e.target.result.split(',')[1];
         };
         reader.readAsDataURL(file);
     }
 }
 
-// 呼叫 Gemini 1.5 Flash 辨識食物 (最新防錯修正版)
+// 呼叫 Gemini 辨識食物 (自動支援 2.5-flash / 1.5-flash 雙模型備援)
 async function analyzeFoodImage() {
     const apiKey = document.getElementById('api-key').value.trim();
     if (!apiKey) return alert("請輸入 Gemini API Key！");
@@ -123,53 +122,60 @@ async function analyzeFoodImage() {
   "description": "簡短評語"
 }`;
 
-    try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [
-                        { text: prompt },
-                        { inline_data: { mime_type: "image/jpeg", data: base64Image } }
-                    ]
-                }]
-            })
-        });
+    // 優先使用 gemini-2.5-flash，若失敗則退回 gemini-1.5-flash
+    const models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash'];
+    let lastErrorMsg = "";
 
-        const data = await res.json();
+    for (const model of models) {
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            { text: prompt },
+                            { inline_data: { mime_type: "image/jpeg", data: base64Image } }
+                        ]
+                    }]
+                })
+            });
 
-        // 1. 檢查 API 是否回報錯誤
-        if (data.error) {
-            alert(`API 呼叫失敗 (${data.error.code})：${data.error.message}`);
-            return;
+            const data = await res.json();
+
+            if (data.error) {
+                lastErrorMsg = `[${model}] ${data.error.message} (${data.error.code})`;
+                console.warn(`Model ${model} failed, trying next...`, data.error);
+                continue; // 嘗試下一個模型
+            }
+
+            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                lastErrorMsg = `[${model}] 無法解析此照片內容`;
+                continue;
+            }
+
+            // 清理 Markdown 標籤並解析 JSON
+            let rawText = data.candidates[0].content.parts[0].text;
+            rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+            const food = JSON.parse(rawText);
+
+            document.getElementById('food-name').value = food.food_name || "";
+            document.getElementById('food-cal').value = food.calories || 0;
+            document.getElementById('food-p').value = food.protein || 0;
+            document.getElementById('food-c').value = food.carbs || 0;
+            document.getElementById('food-f').value = food.fat || 0;
+            document.getElementById('ai-desc').innerText = `💡 AI 評估：${food.description || ''}`;
+
+            alert(`✨ 辨識成功！(採用模型: ${model})`);
+            return; // 成功即離開
+        } catch (e) {
+            lastErrorMsg = e.message;
         }
-
-        // 2. 檢查回應結構
-        if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-            alert("AI 無法分析此圖片，請嘗試更換照片或確認 API Key 權限！");
-            return;
-        }
-
-        // 3. 取得文字並移除可能包含的 ```json ... ``` 標籤
-        let rawText = data.candidates[0].content.parts[0].text;
-        rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-
-        const food = JSON.parse(rawText);
-
-        // 填入對應欄位
-        document.getElementById('food-name').value = food.food_name || "";
-        document.getElementById('food-cal').value = food.calories || 0;
-        document.getElementById('food-p').value = food.protein || 0;
-        document.getElementById('food-c').value = food.carbs || 0;
-        document.getElementById('food-f').value = food.fat || 0;
-        document.getElementById('ai-desc').innerText = `💡 AI 評估：${food.description || ''}`;
-
-        alert("✨ 辨識成功！請確認數據後點擊儲存。");
-    } catch (e) {
-        console.error(e);
-        alert("辨識失敗：" + e.message);
     }
+
+    // 若全部模型皆失敗
+    alert(`🚨 辨識失敗！請檢查 API Key 是否正確。\n詳細錯誤訊息：${lastErrorMsg}`);
 }
 
 // 儲存紀錄至 LocalStorage
@@ -190,6 +196,7 @@ function saveFoodLog() {
 
     alert("💾 紀錄已儲存！");
     document.getElementById('food-name').value = "";
+    renderCharts();
 }
 
 // 3. 渲染 Plotly 圖表
@@ -208,13 +215,12 @@ function renderCharts() {
         totalF += item.f;
     });
 
-    // 更新數據卡片
     if (document.getElementById('m-cal')) document.getElementById('m-cal').innerText = `${totalCal} kcal`;
     if (document.getElementById('m-p')) document.getElementById('m-p').innerText = `${totalP} g`;
     if (document.getElementById('m-c')) document.getElementById('m-c').innerText = `${totalC} g`;
     if (document.getElementById('m-f')) document.getElementById('m-f').innerText = `${totalF} g`;
 
-    // 圓餅圖：三大營養素比例
+    // 圓餅圖
     const pieData = [{
         values: [totalP * 4, totalC * 4, totalF * 9],
         labels: ['蛋白質', '碳水化合物', '脂肪'],
@@ -230,7 +236,7 @@ function renderCharts() {
 
     if (document.getElementById('pie-chart')) Plotly.newPlot('pie-chart', pieData, pieLayout);
 
-    // 長條圖：目標達成率比較
+    // 長條圖
     const targetCal = parseFloat(document.getElementById('target-cal')?.innerText) || 2000;
     const targetP = parseFloat(document.getElementById('target-p')?.innerText) || 125;
     const targetC = parseFloat(document.getElementById('target-c')?.innerText) || 225;
@@ -284,7 +290,7 @@ ${JSON.stringify(monthLogs, null, 2)}
 請分析其飲食習慣，給予 300 字左右的月度健康診斷報告，包含優點、改進建議與下個月的飲食目標調整建議。`;
 
     try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
