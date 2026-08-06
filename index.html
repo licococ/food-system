@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NOURISH AI - 智慧飲食與營養管理</title>
-    <!-- CSS 樣式表 -->
-    <link rel="stylesheet" href="style.css">
-    <!-- Plotly.js 圖表庫 (CDN) -->
-    <script src="script.js"></script>
+    <!-- CSS 樣式表 (請確認檔名是 app.css 或是 style.css) -->
+    <link rel="stylesheet" href="app.css">
+    <!-- 修正 1：正確引入 Plotly.js 圖表庫 (CDN) -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 </head>
 <body>
 
@@ -178,12 +178,12 @@
             </div>
             <div id="diag-result" class="warm-box" style="margin-top:20px; display:none;">
                 <h3 style="margin-top:0;">📋 AI 診斷報告</h3>
-                <div id="diag-content" style="line-height:1.8; whitespace: pre-line;"></div>
+                <div id="diag-content" style="line-height:1.8; white-space: pre-line;"></div>
             </div>
         </div>
     </div>
 
-    <!-- JavaScript 邏輯 -->
+    <!-- 修正 2：保留檔尾的 JavaScript 邏輯，並確保與你的 JS 檔名一致（app.js） -->
     <script src="app.js"></script>
 </body>
 </html>
