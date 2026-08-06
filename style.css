@@ -1,171 +1,227 @@
-/* 全局背景：柔和暖燕麥色 */
+/* 全域變數設定 */
+:root {
+    --primary-color: #2D3B2D;
+    --accent-color: #7A8B7B;
+    --bg-color: #F7F9F6;
+    --card-bg: #FFFFFF;
+    --warm-bg: #EAECE4;
+    --text-color: #333333;
+    --border-radius: 12px;
+}
+
 body {
-    background-color: #F9F8F3;
-    color: #2D4A3E;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
     margin: 0;
     padding: 20px;
+    display: flex;
+    justify-content: center;
 }
 
 .container {
-    max-width: 1100px;
-    margin: 0 auto;
+    width: 100%;
+    max-width: 1000px;
 }
 
-/* 頂部 Header 區域 */
+/* Header */
 .brand-header {
-    padding: 35px 0px 20px 0px;
-    border-bottom: 2px solid #EAE8DF;
+    background-color: var(--primary-color);
+    color: #FFFFFF;
+    padding: 24px;
+    border-radius: var(--border-radius);
     margin-bottom: 20px;
 }
+
 .brand-title {
-    font-size: 2.2rem;
-    font-weight: 800;
-    letter-spacing: 2px;
-    color: #2D4A3E;
-    line-height: 1.3;
-}
-.brand-desc {
-    color: #7A8B7B;
-    font-size: 0.95rem;
-    margin-top: 4px;
+    font-size: 1.8rem;
+    font-weight: 700;
 }
 
-/* Tabs */
+.brand-desc {
+    font-size: 0.95rem;
+    opacity: 0.8;
+    margin-top: 5px;
+}
+
+/* Tab 選單 */
 .tabs {
     display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+    gap: 10px;
     margin-bottom: 20px;
+    flex-wrap: wrap;
 }
+
 .tab-btn {
-    background-color: #EFEFE8;
-    color: #5A6E63;
-    border-radius: 20px;
+    flex: 1;
+    min-width: 140px;
+    padding: 12px 16px;
     border: none;
-    padding: 10px 20px;
+    background-color: #E2E8E0;
+    color: var(--primary-color);
     font-weight: 600;
-    font-size: 0.95rem;
+    border-radius: 8px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
 }
+
+.tab-btn:hover {
+    background-color: #CBD5C8;
+}
+
 .tab-btn.active {
-    background-color: #2D4A3E;
+    background-color: var(--primary-color);
     color: #FFFFFF;
 }
 
+/* Tab 內容隱藏/顯示控管 */
 .tab-content {
     display: none;
 }
+
 .tab-content.active {
     display: block;
 }
 
-/* Cards & Layout */
+/* 網格系統 */
 .grid-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
 }
+
 @media (max-width: 768px) {
-    .grid-2 { grid-template-columns: 1fr; }
+    .grid-2 {
+        grid-template-columns: 1fr;
+    }
 }
 
+/* 卡片樣式 */
 .card {
-    background: #FFFFFF;
-    border-radius: 16px;
+    background: var(--card-bg);
     padding: 24px;
-    border: 1px solid #EAE8DF;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .warm-box {
-    background-color: #E5E8C9;
-    border-radius: 24px;
+    background: var(--warm-bg);
     padding: 24px;
-    color: #2D4A3E;
+    border-radius: var(--border-radius);
 }
 
+/* 表單控制 */
 .form-group {
     margin-bottom: 15px;
 }
-.form-group label {
-    display: block;
-    margin-bottom: 6px;
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-input, select {
-    width: 100%;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #CCC;
-    box-sizing: border-box;
-}
+
 .form-row {
     display: flex;
-    gap: 10px;
+    gap: 15px;
 }
 
-.step-card {
-    background-color: #F9F8F3;
-    border-radius: 14px;
-    padding: 12px 16px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-}
-.step-number {
-    background-color: #E5E8C9;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    margin-right: 12px;
+.form-row .form-group {
+    flex: 1;
 }
 
-.bmi-badge {
-    padding: 4px 12px;
-    border-radius: 12px;
-    color: white;
+label {
+    display: block;
     font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 6px;
 }
 
-.advice-box {
-    background: #F0F2DC;
-    padding: 12px;
-    border-radius: 12px;
-    font-size: 0.95rem;
+input[type="text"],
+input[type="number"],
+input[type="password"],
+input[type="date"],
+input[type="month"],
+select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #D0D5CE;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 1rem;
 }
 
+.radio-group {
+    display: flex;
+    gap: 20px;
+    padding: 8px 0;
+}
+
+/* 按鈕 */
 .btn {
-    background-color: #2D4A3E;
+    width: 100%;
+    padding: 12px;
+    background-color: var(--primary-color);
     color: white;
     border: none;
-    padding: 12px 24px;
-    border-radius: 25px;
+    border-radius: 6px;
+    font-size: 1rem;
     font-weight: 600;
-    width: 100%;
     cursor: pointer;
+    margin-top: 10px;
 }
+
 .btn:hover {
-    background-color: #1F352C;
+    background-color: #1A241A;
+}
+
+/* 指標與 Badge */
+.bmi-badge {
+    font-size: 0.9rem;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    margin-left: 10px;
 }
 
 .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 15px;
-    margin-top: 15px;
 }
+
 .metric-card {
-    background: #F9F8F3;
+    background: #F0F4EF;
     padding: 15px;
-    border-radius: 12px;
+    border-radius: 8px;
     text-align: center;
 }
-.metric-card h4 { margin: 0; font-size: 0.85rem; color: #7A8B7B; }
-.metric-card p { margin: 8px 0 0 0; font-size: 1.3rem; font-weight: 700; }
+
+.metric-card h4 {
+    margin: 0 0 8px 0;
+    color: var(--accent-color);
+}
+
+.metric-card p {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+/* 步驟說明小卡 */
+.step-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #F4F6F3;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.step-number {
+    background: var(--primary-color);
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
