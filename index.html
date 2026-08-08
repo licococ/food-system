@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NOURISH AI - 智慧飲食與營養管理</title>
-    <!-- CSS 樣式表 (請確認檔名是 app.css 或是 style.css) -->
+    <!-- CSS 樣式表 -->
     <link rel="stylesheet" href="style.css">
-    <!-- 修正 1：正確引入 Plotly.js 圖表庫 (CDN) -->
+    <!-- Plotly.js 圖表庫 (CDN) -->
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 </head>
 <body>
@@ -109,7 +109,7 @@
                     <div id="image-preview-container" style="display:none; margin-bottom: 15px;">
                         <img id="image-preview" src="" alt="預覽照片" style="max-width:100%; border-radius:12px;">
                     </div>
-                    <button class="btn" onclick="analyzeFoodImage()">✨ 開始 AI 自動分析</button>
+                    <button class="btn" onclick="analyzeFoodImage(event)">✨ 開始 AI 自動分析</button>
                 </div>
 
                 <div class="card">
@@ -160,8 +160,8 @@
                     <div class="metric-card"><h4>🥑 脂肪</h4><p id="m-f">0 g</p></div>
                 </div>
                 <div class="grid-2" style="margin-top:20px;">
-                    <div id="pie-chart"></div>
-                    <div id="bar-chart"></div>
+                    <div id="pie-chart" class="chart-box"></div>
+                    <div id="bar-chart" class="chart-box"></div>
                 </div>
             </div>
         </div>
@@ -174,7 +174,7 @@
                     <label>📅 分析月份 (格式: YYYY-MM)</label>
                     <input type="month" id="diag-month">
                 </div>
-                <button class="btn" onclick="generateMonthlyDiagnosis()">✨ 產生健康診斷報告</button>
+                <button class="btn" onclick="generateMonthlyDiagnosis(event)">✨ 產生健康診斷報告</button>
             </div>
             <div id="diag-result" class="warm-box" style="margin-top:20px; display:none;">
                 <h3 style="margin-top:0;">📋 AI 診斷報告</h3>
@@ -183,7 +183,7 @@
         </div>
     </div>
 
-    <!-- 修正 2：保留檔尾的 JavaScript 邏輯，並確保與你的 JS 檔名一致（app.js） -->
+    <!-- JavaScript 腳本 -->
     <script src="script.js"></script>
 </body>
 </html>
