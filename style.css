@@ -22,6 +22,7 @@ body {
 .container {
     width: 100%;
     max-width: 1000px;
+    box-sizing: border-box;
 }
 
 /* Header */
@@ -83,17 +84,13 @@ body {
     display: block;
 }
 
-/* 網格系統 */
+/* 網格系統 - 修正爆版主要點 min-width: 0 */
 .grid-2 {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
-}
-
-@media (max-width: 768px) {
-    .grid-2 {
-        grid-template-columns: 1fr;
-    }
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* 卡片樣式 */
@@ -102,12 +99,16 @@ body {
     padding: 24px;
     border-radius: var(--border-radius);
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    min-width: 0; /* 防止網格內部元素撐破卡片 */
+    box-sizing: border-box;
 }
 
 .warm-box {
     background: var(--warm-bg);
     padding: 24px;
     border-radius: var(--border-radius);
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 /* 表單控制 */
@@ -224,4 +225,17 @@ select {
     justify-content: center;
     font-size: 0.85rem;
     font-weight: bold;
+}
+
+/* Plotly 圖表自適應修復 */
+.chart-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden;
+}
+
+.js-plotly-plot .plotly, .js-plotly-plot .plotly div {
+    width: 100% !important;
+    margin: 0 auto;
 }
