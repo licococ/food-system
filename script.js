@@ -1,12 +1,8 @@
-// ==========================================
 // 全域變數
-// ==========================================
 let base64Image = "";
 let imageMimeType = "image/jpeg";
 
-// ==========================================
-// 頁面初始化
-// ==========================================
+// 頁面載入初始化
 window.onload = function() {
     const today = new Date().toISOString().split('T')[0];
     if (document.getElementById('record-date')) document.getElementById('record-date').value = today;
@@ -15,18 +11,16 @@ window.onload = function() {
     const currentMonth = new Date().toISOString().slice(0, 7);
     if (document.getElementById('diag-month')) document.getElementById('diag-month').value = currentMonth;
 
-    // 初始健康數據與圖表計算
+    // 初次計算健康指標
     calculateHealth();
     
-    // 延遲渲染圖表以確保 DOM 元素已渲染完成
+    // 延遲繪製初始圖表
     setTimeout(() => {
         renderCharts();
-    }, 100);
+    }, 150);
 };
 
-// ==========================================
-// 頁籤切換邏輯 (修復 Plotly 切換寬度 BUG)
-// ==========================================
+// Tab 切換邏輯 (防止 Plotly 寬度爆破)
 function switchTab(index) {
     const tabs = document.querySelectorAll('.tab-btn');
     const contents = document.querySelectorAll('.tab-content');
@@ -41,7 +35,7 @@ function switchTab(index) {
         }
     });
 
-    // 當切換到 Tab 2 (營養攝取圖表) 時重新渲染並強迫 resize
+    // 切換到 Tab 2 重新計算長寬
     if (index === 2) {
         requestAnimationFrame(() => {
             renderCharts();
@@ -53,9 +47,7 @@ function switchTab(index) {
     }
 }
 
-// ==========================================
-// 1. 計算 BMI 與健康目標
-// ==========================================
+// 1. 計算 BMI 與 TDEE
 function calculateHealth() {
     const genderEl = document.querySelector('input[name="gender"]:checked');
     if (!genderEl) return;
@@ -70,8 +62,8 @@ function calculateHealth() {
 
     // 計算 BMI
     const bmi = (weight / ((height / 100) ** 2)).toFixed(1);
-    const bmiValEl = document.getElementById('bmi-val');
-    if (bmiValEl) bmiValEl.innerText = bmi;
+    const bmiVal = document.getElementById('bmi-val');
+    if (bmiVal) bmiVal.innerText = bmi;
 
     const bmiBadge = document.getElementById('bmi-badge');
     const bmiAdvice = document.getElementById('bmi-advice');
@@ -114,40 +106,33 @@ function calculateHealth() {
     if (document.getElementById('target-f')) document.getElementById('target-f').innerText = Math.round((targetCal * 0.30) / 9);
 }
 
-// ==========================================
-// 2. 照片預覽與 Base64 轉換 (自動動態對應 Mime Type)
-// ==========================================
+// 2. 照片預覽與 Base64 轉換
 function previewImage(event) {
     const file = event.target.files[0];
     if (file) {
-        // 自動判斷照片類型 (png/jpeg/webp)
         imageMimeType = file.type || "image/jpeg";
-        
         const reader = new FileReader();
         reader.onload = function(e) {
             document.getElementById('image-preview').src = e.target.result;
             document.getElementById('image-preview-container').style.display = 'block';
-            // 擷取正確的 Base64 純字串
             base64Image = e.target.result.split(',')[1];
         };
         reader.readAsDataURL(file);
     }
 }
 
-// ==========================================
-// Gemini 辨識食物 (支援雙模型自動備援)
-// ==========================================
-async function analyzeFoodImage() {
+// 呼叫 Gemini 辨識食物
+async function analyzeFoodImage(e) {
     const apiKey = document.getElementById('api-key').value.trim();
     if (!apiKey) return alert("請輸入 Gemini API Key！");
     if (!base64Image) return alert("請先選擇或上傳食物照片！");
 
-    const btn = event.target;
+    const btn = e ? e.target : document.querySelector("button[onclick*='analyzeFoodImage']");
     const originalText = btn.innerText;
-    btn.innerText = "⏳ AI 正在辨識分析中...";
+    btn.innerText = "⏳ AI 分析中...";
     btn.disabled = true;
 
-    const prompt = `請分析這張照片中的食物，並嚴格只回傳純 JSON 格式，不要包含任何 Markdown 標籤或額外開頭結尾文字：
+    const prompt = `請分析這張照片中的食物，並嚴格只回傳純 JSON 格式，不要包含任何 markdown 標籤（如 \`\`\`json）：
 {
   "food_name": "食物名稱",
   "calories": 數字,
@@ -157,7 +142,6 @@ async function analyzeFoodImage() {
   "description": "簡短評語"
 }`;
 
-    // 優先使用 2.5-flash / 1.5-flash 進行備援
     const models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash'];
     let lastErrorMsg = "";
 
@@ -180,7 +164,6 @@ async function analyzeFoodImage() {
 
             if (data.error) {
                 lastErrorMsg = `[${model}] ${data.error.message}`;
-                console.warn(`Model ${model} failed, trying next...`, data.error);
                 continue;
             }
 
@@ -189,7 +172,6 @@ async function analyzeFoodImage() {
                 continue;
             }
 
-            // 清理 Markdown code block 標記
             let rawText = data.candidates[0].content.parts[0].text;
             rawText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
 
@@ -200,16 +182,14 @@ async function analyzeFoodImage() {
             document.getElementById('food-p').value = food.protein || 0;
             document.getElementById('food-c').value = food.carbs || 0;
             document.getElementById('food-f').value = food.fat || 0;
-            document.getElementById('ai-desc').innerText = `💡 AI 評估：${food.description || '辨識完成'}`;
+            document.getElementById('ai-desc').innerText = `💡 AI 評估：${food.description || '辨識成功'}`;
 
             alert(`✨ 辨識成功！(採用模型: ${model})`);
-            
             btn.innerText = originalText;
             btn.disabled = false;
             return;
-        } catch (e) {
-            console.error(e);
-            lastErrorMsg = e.message;
+        } catch (err) {
+            lastErrorMsg = err.message;
         }
     }
 
@@ -218,9 +198,7 @@ async function analyzeFoodImage() {
     alert(`🚨 辨識失敗！請檢查 API Key 是否正確。\n詳細錯誤訊息：${lastErrorMsg}`);
 }
 
-// ==========================================
 // 儲存紀錄至 LocalStorage
-// ==========================================
 function saveFoodLog() {
     const date = document.getElementById('record-date').value;
     const name = document.getElementById('food-name').value.trim();
@@ -239,16 +217,13 @@ function saveFoodLog() {
     alert("💾 紀錄已儲存！");
     document.getElementById('food-name').value = "";
     
-    // 更新檢視日期為紀錄當日並重新渲染圖表
     if (document.getElementById('view-date')) {
         document.getElementById('view-date').value = date;
     }
     renderCharts();
 }
 
-// ==========================================
-// 3. 渲染 Plotly 圖表
-// ==========================================
+// 3. 渲染 Plotly 圖表 (自適應排版修正)
 function renderCharts() {
     const viewDateEl = document.getElementById('view-date');
     if (!viewDateEl) return;
@@ -269,7 +244,7 @@ function renderCharts() {
     if (document.getElementById('m-c')) document.getElementById('m-c').innerText = `${totalC} g`;
     if (document.getElementById('m-f')) document.getElementById('m-f').innerText = `${totalF} g`;
 
-    // 1. 圓餅圖 (熱量來源比例)
+    // 1. 圓餅圖
     const pCal = totalP * 4;
     const cCal = totalC * 4;
     const fCal = totalF * 9;
@@ -285,18 +260,20 @@ function renderCharts() {
     }];
 
     const pieLayout = {
-        title: { text: `${viewDate} 熱量來源比例`, font: { size: 16, color: '#2D3B2D' } },
-        height: 350,
-        margin: { t: 50, b: 20, l: 20, r: 20 },
+        title: { text: `${viewDate} 熱量來源比例`, font: { size: 15, color: '#2D3B2D' } },
+        autosize: true,
+        height: 320,
+        margin: { t: 40, b: 40, l: 10, r: 10 },
         paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)'
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        legend: { orientation: 'h', y: -0.15 } // 圖例置於下方
     };
 
     if (document.getElementById('pie-chart')) {
         Plotly.newPlot('pie-chart', pieData, pieLayout, { responsive: true, displayModeBar: false });
     }
 
-    // 2. 長條圖 (實際攝取 vs 目標值)
+    // 2. 長條圖
     const targetCal = parseFloat(document.getElementById('target-cal')?.innerText) || 2000;
     const targetP = parseFloat(document.getElementById('target-p')?.innerText) || 125;
     const targetC = parseFloat(document.getElementById('target-c')?.innerText) || 225;
@@ -320,12 +297,14 @@ function renderCharts() {
     ];
 
     const barLayout = {
-        title: { text: '攝取量 vs 目標值', font: { size: 16, color: '#2D3B2D' } },
+        title: { text: '攝取量 vs 目標值', font: { size: 15, color: '#2D3B2D' } },
+        autosize: true,
         barmode: 'group',
-        height: 350,
-        margin: { t: 50, b: 40, l: 40, r: 20 },
+        height: 320,
+        margin: { t: 40, b: 40, l: 35, r: 10 },
         paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)'
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        legend: { orientation: 'h', y: -0.25 } // 圖例置於下方
     };
 
     if (document.getElementById('bar-chart')) {
@@ -333,10 +312,8 @@ function renderCharts() {
     }
 }
 
-// ==========================================
 // 4. AI 月度健康診斷
-// ==========================================
-async function generateMonthlyDiagnosis() {
+async function generateMonthlyDiagnosis(e) {
     const apiKey = document.getElementById('api-key').value.trim();
     if (!apiKey) return alert("請先於 Tab 2 輸入你的 Gemini API Key！");
 
@@ -350,7 +327,7 @@ async function generateMonthlyDiagnosis() {
         return alert("該月份尚無任何飲食紀錄，無法進行 AI 診斷！");
     }
 
-    const btn = event.target;
+    const btn = e ? e.target : document.querySelector("button[onclick*='generateMonthlyDiagnosis']");
     const originalText = btn.innerText;
     btn.innerText = "🤖 AI 診斷分析中...";
     btn.disabled = true;
@@ -373,16 +350,14 @@ ${JSON.stringify(monthLogs, null, 2)}
         
         if (data.error) {
             alert(`API 錯誤：${data.error.message}`);
-            btn.innerText = originalText;
-            btn.disabled = false;
             return;
         }
 
         const report = data.candidates[0].content.parts[0].text;
         document.getElementById('diag-content').innerText = report;
         document.getElementById('diag-result').style.display = 'block';
-    } catch (e) {
-        console.error(e);
+    } catch (err) {
+        console.error(err);
         alert("產生診斷報告失敗，請確認網路連線與 API Key。");
     } finally {
         btn.innerText = originalText;
