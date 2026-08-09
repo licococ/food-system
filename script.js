@@ -47,7 +47,7 @@ function switchTab(index) {
     }
 }
 
-// 1. 計算 BMI 與 TDEE 及目標熱量 (已修正)
+// 1. 計算 BMI 與 TDEE，並根據 BMI 自動判定給予熱量建議
 function calculateHealth() {
     const genderEl = document.querySelector('input[name="gender"]:checked');
     if (!genderEl) return;
@@ -57,66 +57,58 @@ function calculateHealth() {
     const weight = parseFloat(document.getElementById('weight')?.value) || 0;
     const age = parseInt(document.getElementById('age')?.value) || 0;
     const activity = parseFloat(document.getElementById('activity')?.value) || 1.2;
-    const goal = document.getElementById('goal')?.value || 'maintain'; // 取得目標選單的值
 
     if (!height || !weight || !age) return;
 
-    // 計算 BMI
-    const bmi = (weight / ((height / 100) ** 2)).toFixed(1);
+    // 1. 計算 BMI
+    const bmi = parseFloat((weight / ((height / 100) ** 2)).toFixed(1));
     const bmiVal = document.getElementById('bmi-val');
     if (bmiVal) bmiVal.innerText = bmi;
 
     const bmiBadge = document.getElementById('bmi-badge');
     const bmiAdvice = document.getElementById('bmi-advice');
 
-    if (bmiBadge && bmiAdvice) {
-        if (bmi < 18.5) {
-            bmiBadge.innerText = "體重過輕";
-            bmiBadge.style.background = "#e74c3c";
-            bmiAdvice.innerText = "建議適度增加熱量與蛋白質攝取，並搭配重量訓練。";
-        } else if (bmi < 24) {
-            bmiBadge.innerText = "健康體位";
-            bmiBadge.style.background = "#2ecc71";
-            bmiAdvice.innerText = "太棒了！你的體重處於理想範圍，請繼續保持均衡飲食與運動！";
-        } else if (bmi < 27) {
-            bmiBadge.innerText = "體重過重";
-            bmiBadge.style.background = "#f39c12";
-            bmiAdvice.innerText = "建議稍微控管每日總熱量，並增加每週運動頻率。";
-        } else {
-            bmiBadge.innerText = "肥胖";
-            bmiBadge.style.background = "#e74c3c";
-            bmiAdvice.innerText = "建議減少高熱量及加工食物攝取，並尋求專業醫師或營養師指引。";
-        }
-    }
-
-    // 計算 BMR (Mifflin-St Jeor 公式)
+    // 2. 計算 BMR (Mifflin-St Jeor 公式) 與 TDEE
     let bmr = (10 * weight) + (6.25 * height) - (5 * age);
     bmr += (gender === '男') ? 5 : -161;
-
-    // 計算 TDEE
     const tdee = Math.round(bmr * activity);
-    if (document.getElementById('tdee-val')) document.getElementById('tdee-val').innerText = tdee;
 
-    // 根據個人目標設定建議卡路里 (此處已修正)
-    let targetCal = tdee;
-    if (goal === 'lose') {
-        targetCal = tdee - 300;       // 溫和減脂
-    } else if (goal === 'lose-fast') {
-        targetCal = tdee - 500;       // 積極減脂
-    } else if (goal === 'gain') {
-        targetCal = tdee + 300;       // 溫和增肌
-    } else if (goal === 'gain-fast') {
-        targetCal = tdee + 500;       // 積極增肌
+    if (document.getElementById('tdee-val')) {
+        document.getElementById('tdee-val').innerText = tdee;
     }
 
-    if (document.getElementById('target-cal')) document.getElementById('target-cal').innerText = Math.round(targetCal);
+    // 3. 根據 BMI 自動判定建議熱量 (Auto-adjust calories based on BMI)
+    let targetCal = tdee;
+
+    if (bmi < 18.5) {
+        if (bmiBadge) { bmiBadge.innerText = "體重過輕"; bmiBadge.style.background = "#3498db"; }
+        if (bmiAdvice) bmiAdvice.innerText = "建議適度增加熱量與蛋白質攝取，已為您自動規劃溫和增肌目標 (+300 kcal)。";
+        targetCal = tdee + 300; // 自動增肌 +300
+    } else if (bmi < 24) {
+        if (bmiBadge) { bmiBadge.innerText = "健康體位"; bmiBadge.style.background = "#2ecc71"; }
+        if (bmiAdvice) bmiAdvice.innerText = "太棒了！你的體重處於理想範圍，請繼續保持均衡飲食與運動！";
+        targetCal = tdee;       // 維持體重
+    } else if (bmi < 27) {
+        if (bmiBadge) { bmiBadge.innerText = "體重過重"; bmiBadge.style.background = "#f39c12"; }
+        if (bmiAdvice) bmiAdvice.innerText = "建議稍微控管每日總熱量，已為您自動規劃溫和減脂目標 (-300 kcal)。";
+        targetCal = tdee - 300; // 自動減脂 -300
+    } else {
+        if (bmiBadge) { bmiBadge.innerText = "肥胖"; bmiBadge.style.background = "#e74c3c"; }
+        if (bmiAdvice) bmiAdvice.innerText = "建議控管每日總熱量，已為您自動規劃積極減脂目標 (-500 kcal)。";
+        targetCal = tdee - 500; // 自動減脂 -500
+    }
+
+    // 4. 更新畫面上的建議熱量與三大營養素
+    if (document.getElementById('target-cal')) {
+        document.getElementById('target-cal').innerText = Math.round(targetCal);
+    }
 
     // 三大營養素分配：蛋白質 25%, 碳水 45%, 脂肪 30%
     if (document.getElementById('target-p')) document.getElementById('target-p').innerText = Math.round((targetCal * 0.25) / 4);
     if (document.getElementById('target-c')) document.getElementById('target-c').innerText = Math.round((targetCal * 0.45) / 4);
     if (document.getElementById('target-f')) document.getElementById('target-f').innerText = Math.round((targetCal * 0.30) / 9);
 
-    // 若圖表已渲染過，即時更新「攝取量 vs 目標值」長條圖
+    // 5. 即時更新圖表
     renderCharts();
 }
 
