@@ -1,200 +1,378 @@
 <!DOCTYPE html>
+
 <html lang="zh-TW">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>NOURISH AI - 智慧飲食與營養管理</title>
+
     <!-- 強制瀏覽器載入最新 CSS (?v=2 防快取) -->
+
     <link rel="stylesheet" href="style.css?v=2">
+
     <!-- Plotly.js 圖表庫 (CDN) -->
+
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
 </head>
+
 <body>
 
+
+
     <div class="container">
+
         <!-- 頂部 Header 區域 -->
+
         <header class="brand-header">
+
             <div>
+
                 <div class="brand-title">🌱 NOURISH AI</div>
+
                 <div class="brand-desc">智慧視覺辨識 ‧ 質感飲食數據日誌</div>
+
             </div>
+
         </header>
 
+
+
         <!-- Tab 頁籤選單 -->
+
         <div class="tabs">
+
             <button class="tab-btn active" onclick="switchTab(0)">🎯 1. 身體數據與目標</button>
+
             <button class="tab-btn" onclick="switchTab(1)">📷 2. AI 照片辨識與紀錄</button>
+
             <button class="tab-btn" onclick="switchTab(2)">📊 3. 營養攝取圖表</button>
+
             <button class="tab-btn" onclick="switchTab(3)">🤖 4. AI 月度健康診斷</button>
+
         </div>
+
+
 
         <!-- Tab 1: 身體數據與目標 -->
+
         <div class="tab-content active" id="tab-0">
+
             <div class="grid-2">
+
                 <div class="card">
+
                     <h3>⚙️ 身體數據輸入</h3>
+
                     <div class="form-group">
+
                         <label>性別</label>
+
                         <div class="radio-group">
+
                             <label><input type="radio" name="gender" value="男" checked onchange="calculateHealth()"> 男</label>
+
                             <label><input type="radio" name="gender" value="女" onchange="calculateHealth()"> 女</label>
+
                         </div>
+
                     </div>
+
                     <div class="form-row">
+
                         <div class="form-group">
+
                             <label>身高 (cm)</label>
+
                             <input type="number" id="height" value="170" oninput="calculateHealth()">
+
                         </div>
+
                         <div class="form-group">
+
                             <label>體重 (kg)</label>
+
                             <input type="number" id="weight" value="65" oninput="calculateHealth()">
+
                         </div>
+
                     </div>
+
                     <div class="form-row">
+
                         <div class="form-group">
+
                             <label>年齡</label>
+
                             <input type="number" id="age" value="25" oninput="calculateHealth()">
+
                         </div>
+
                         <div class="form-group">
+
                             <label>每日活動量</label>
+
                             <select id="activity" onchange="calculateHealth()">
+
                                 <option value="1.2">久坐/無運動</option>
+
                                 <option value="1.375">輕度運動 (週1-3天)</option>
+
                                 <option value="1.55" selected>中度運動 (週3-5天)</option>
+
                                 <option value="1.725">高強度運動 (週6-7天)</option>
+
                             </select>
+
                         </div>
+
                     </div>
-                    <!-- 新增：體重與飲食目標選擇 -->
-                    <div class="form-group" style="margin-top: 15px;">
-                        <label>🎯 個人體重目標</label>
-                        <select id="goal" onchange="calculateHealth()">
-                            <option value="lose">溫和減脂 / 減重 (-300 kcal)</option>
-                            <option value="lose-fast">積極減脂 / 減重 (-500 kcal)</option>
-                            <option value="maintain" selected>維持體重 (維持 TDEE)</option>
-                            <option value="gain">溫和增肌 / 增重 (+300 kcal)</option>
-                            <option value="gain-fast">積極增肌 / 增重 (+500 kcal)</option>
-                        </select>
-                    </div>
+
                 </div>
+
+
 
                 <div class="warm-box">
+
                     <h3 style="margin-top:0;">⚖️ BMI 體重狀態分析</h3>
+
                     <div style="font-size: 1.8rem; font-weight: 700; margin-bottom: 10px;">
+
                         BMI：<span id="bmi-val">22.5</span>
+
                         <span id="bmi-badge" class="bmi-badge">健康體位</span>
+
                     </div>
+
                     <p id="bmi-advice" class="advice-box"></p>
+
                     <hr style="border:none; border-top: 1px solid #C2C69D; margin: 20px 0;">
+
                     <h3 style="margin-top:0;">🎯 調整後每日建議攝取</h3>
+
                     <div style="font-size: 2.2rem; font-weight: 800; margin: 0;">
+
                         <span id="target-cal">2000</span> <span style="font-size:1.1rem; font-weight:normal;">kcal / 天</span>
+
                     </div>
+
                     <p style="font-size:0.85rem; color:#555; margin-top:2px; margin-bottom:15px;">（維持體重 TDEE 估算為 <span id="tdee-val">2000</span> kcal）</p>
+
                     <div style="font-size:1.05rem; line-height:2.0;">
+
                         <b>🥩 建議蛋白質：</b> <span id="target-p">125</span> g<br>
+
                         <b>🍚 建議碳水化合物：</b> <span id="target-c">225</span> g<br>
+
                         <b>🥑 建議脂肪：</b> <span id="target-f">67</span> g
+
                     </div>
+
                 </div>
+
             </div>
+
         </div>
+
+
 
         <!-- Tab 2: AI 照片辨識與紀錄 -->
+
         <div class="tab-content" id="tab-1">
+
             <div class="grid-2">
+
                 <div class="card">
+
                     <h3>💡 快速紀錄三步驟</h3>
+
                     <div class="step-card"><div class="step-number">1</div><div class="step-title">輸入你的 Gemini API Key</div></div>
+
                     <div class="step-card"><div class="step-number">2</div><div class="step-title">選擇模式或上傳食物相片</div></div>
+
                     <div class="step-card"><div class="step-number">3</div><div class="step-title">點擊 AI 辨識並確認儲存</div></div>
 
+
+
                     <div class="form-group" style="margin-top:20px;">
+
                         <label>🔑 Gemini API Key</label>
+
                         <input type="password" id="api-key" placeholder="AIzaSy...">
+
                     </div>
+
                     <div class="form-group">
+
                         <label>📷 上傳食物照片</label>
+
                         <input type="file" id="image-input" accept="image/*" onchange="previewImage(event)">
+
                     </div>
+
                     <div id="image-preview-container" style="display:none; margin-bottom: 15px;">
+
                         <img id="image-preview" src="" alt="預覽照片" style="max-width:100%; border-radius:12px;">
+
                     </div>
+
                     <button class="btn" onclick="analyzeFoodImage(event)">✨ 開始 AI 自動分析</button>
+
                 </div>
+
+
 
                 <div class="card">
+
                     <h3>📝 食物資料確認</h3>
+
                     <div class="form-group">
+
                         <label>紀錄日期</label>
+
                         <input type="date" id="record-date">
+
                     </div>
+
                     <div class="form-group">
+
                         <label>食物名稱 *</label>
+
                         <input type="text" id="food-name" placeholder="例如：藍莓香蕉盤">
+
                     </div>
+
                     <div class="form-group">
+
                         <label>總熱量 (kcal) *</label>
+
                         <input type="number" id="food-cal" value="0">
+
                     </div>
+
                     <div class="form-row">
+
                         <div class="form-group">
+
                             <label>蛋白質(g)</label>
+
                             <input type="number" id="food-p" value="0">
+
                         </div>
+
                         <div class="form-group">
+
                             <label>碳水(g)</label>
+
                             <input type="number" id="food-c" value="0">
+
                         </div>
+
                         <div class="form-group">
+
                             <label>脂肪(g)</label>
+
                             <input type="number" id="food-f" value="0">
+
                         </div>
+
                     </div>
+
                     <p id="ai-desc" style="color:#7A8B7B; font-size:0.9rem;"></p>
+
                     <button class="btn" onclick="saveFoodLog()">💾 確認送出並存檔 (儲存至瀏覽器)</button>
+
                 </div>
+
             </div>
+
         </div>
+
+
 
         <!-- Tab 3: 營養攝取圖表 -->
+
         <div class="tab-content" id="tab-2">
+
             <div class="card">
+
                 <div class="form-group" style="max-width: 300px;">
+
                     <label>📅 選擇檢視日期</label>
+
                     <input type="date" id="view-date" onchange="renderCharts()">
+
                 </div>
+
                 <div class="metrics-grid">
+
                     <div class="metric-card"><h4>🔥 當日總熱量</h4><p id="m-cal">0 kcal</p></div>
+
                     <div class="metric-card"><h4>🥩 蛋白質</h4><p id="m-p">0 g</p></div>
+
                     <div class="metric-card"><h4>🍚 碳水化合物</h4><p id="m-c">0 g</p></div>
+
                     <div class="metric-card"><h4>🥑 脂肪</h4><p id="m-f">0 g</p></div>
+
                 </div>
+
                 <div class="grid-2" style="margin-top:20px;">
+
                     <div id="pie-chart" class="chart-box"></div>
+
                     <div id="bar-chart" class="chart-box"></div>
+
                 </div>
+
             </div>
+
         </div>
+
+
 
         <!-- Tab 4: AI 月度健康診斷 -->
+
         <div class="tab-content" id="tab-3">
+
             <div class="card">
+
                 <h3>🤖 AI 營養師月度健康診斷</h3>
+
                 <div class="form-group" style="max-width: 300px;">
+
                     <label>📅 分析月份 (格式: YYYY-MM)</label>
+
                     <input type="month" id="diag-month">
+
                 </div>
+
                 <button class="btn" onclick="generateMonthlyDiagnosis(event)">✨ 產生健康診斷報告</button>
+
             </div>
+
             <div id="diag-result" class="warm-box" style="margin-top:20px; display:none;">
+
                 <h3 style="margin-top:0;">📋 AI 診斷報告</h3>
+
                 <div id="diag-content" style="line-height:1.8; white-space: pre-line;"></div>
+
             </div>
+
         </div>
+
     </div>
 
+
+
     <!-- JavaScript 腳本 -->
+
     <script src="script.js"></script>
+
 </body>
+
 </html>
+
