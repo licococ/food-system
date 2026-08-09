@@ -47,7 +47,7 @@ function switchTab(index) {
     }
 }
 
-// 1. 計算 BMI 與 TDEE
+// 1. 計算 BMI 與 TDEE 及目標熱量 (已修正)
 function calculateHealth() {
     const genderEl = document.querySelector('input[name="gender"]:checked');
     if (!genderEl) return;
@@ -57,6 +57,7 @@ function calculateHealth() {
     const weight = parseFloat(document.getElementById('weight')?.value) || 0;
     const age = parseInt(document.getElementById('age')?.value) || 0;
     const activity = parseFloat(document.getElementById('activity')?.value) || 1.2;
+    const goal = document.getElementById('goal')?.value || 'maintain'; // 取得目標選單的值
 
     if (!height || !weight || !age) return;
 
@@ -96,14 +97,27 @@ function calculateHealth() {
     const tdee = Math.round(bmr * activity);
     if (document.getElementById('tdee-val')) document.getElementById('tdee-val').innerText = tdee;
 
-    // 設定目標
-    const targetCal = tdee;
-    if (document.getElementById('target-cal')) document.getElementById('target-cal').innerText = targetCal;
+    // 根據個人目標設定建議卡路里 (此處已修正)
+    let targetCal = tdee;
+    if (goal === 'lose') {
+        targetCal = tdee - 300;       // 溫和減脂
+    } else if (goal === 'lose-fast') {
+        targetCal = tdee - 500;       // 積極減脂
+    } else if (goal === 'gain') {
+        targetCal = tdee + 300;       // 溫和增肌
+    } else if (goal === 'gain-fast') {
+        targetCal = tdee + 500;       // 積極增肌
+    }
+
+    if (document.getElementById('target-cal')) document.getElementById('target-cal').innerText = Math.round(targetCal);
 
     // 三大營養素分配：蛋白質 25%, 碳水 45%, 脂肪 30%
     if (document.getElementById('target-p')) document.getElementById('target-p').innerText = Math.round((targetCal * 0.25) / 4);
     if (document.getElementById('target-c')) document.getElementById('target-c').innerText = Math.round((targetCal * 0.45) / 4);
     if (document.getElementById('target-f')) document.getElementById('target-f').innerText = Math.round((targetCal * 0.30) / 9);
+
+    // 若圖表已渲染過，即時更新「攝取量 vs 目標值」長條圖
+    renderCharts();
 }
 
 // 2. 照片預覽與 Base64 轉換
