@@ -4,10 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NOURISH AI - 智慧飲食與營養管理</title>
-    <!-- 強制瀏覽器載入最新 CSS (?v=2 防快取) -->
-    <link rel="stylesheet" href="style.css?v=2">
-    <!-- Plotly.js 圖表庫 (CDN) -->
+    <!-- 加上 ?v=999 強制打破瀏覽器舊 CSS 快取 -->
+    <link rel="stylesheet" href="style.css?v=999">
+    
+    <!-- Plotly.js 圖表庫 -->
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    
+    <!-- Marked.js 解析器 (支援 Markdown 表格與粗體) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        // 初始化 Marked.js 設定，確保完美支援 GitHub 風格表格 (GFM)
+        if (typeof marked !== 'undefined') {
+            marked.setOptions({
+                gfm: true,
+                breaks: true
+            });
+        }
+    </script>
 </head>
 <body>
 
@@ -24,7 +37,6 @@
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab(0)">🎯 1. 身體數據與目標</button>
             <button class="tab-btn" onclick="switchTab(1)">📷 2. AI 照片辨識與紀錄</button>
-
             <button class="tab-btn" onclick="switchTab(2)">📊 3. 營養攝取圖表</button>
             <button class="tab-btn" onclick="switchTab(3)">🤖 4. AI 月度健康診斷</button>
         </div>
@@ -87,17 +99,17 @@
                         <b>🥑 建議脂肪：</b> <span id="target-f">67</span> g
                     </div>
 
-                    <!-- 💥 新增：生成一日菜單按鈕 💥 -->
+                    <!-- 生成一日菜單按鈕 -->
                     <div style="margin-top: 20px; text-align: center;">
                         <button class="btn" onclick="generateDailyMenu(event)">🥗 依照每日目標生成一日菜單</button>
                     </div>
                 </div>
             </div>
 
-            <!-- 💥 新增：一日菜單結果顯示區域 💥 -->
+            <!-- 一日菜單結果顯示區域 -->
             <div id="menu-result" class="warm-box" style="margin-top: 20px; display: none;">
                 <h3 style="margin-top: 0;">🍳 AI 建議一日菜單</h3>
-                <div id="menu-content" style="line-height: 1.8; white-space: pre-line;"></div>
+                <div id="menu-content"></div>
             </div>
         </div>
 
@@ -190,12 +202,12 @@
             </div>
             <div id="diag-result" class="warm-box" style="margin-top:20px; display:none;">
                 <h3 style="margin-top:0;">📋 AI 診斷報告</h3>
-                <div id="diag-content" style="line-height:1.8; white-space: pre-line;"></div>
+                <div id="diag-content"></div>
             </div>
         </div>
     </div>
 
-    <!-- JavaScript 腳本 -->
-    <script src="script.js"></script>
+    <!-- JavaScript 腳本 (加上 ?v=999 強制打破舊檔快取) -->
+    <script src="script.js?v=999"></script>
 </body>
 </html>
