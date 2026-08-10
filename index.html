@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NOURISH AI - 智慧飲食與營養管理</title>
-    <!-- 加上 ?v=999 強制打破瀏覽器舊 CSS 快取 -->
-    <link rel="stylesheet" href="style.css?v=999">
+    <link rel="stylesheet" href="style.css?v=1001">
     
     <!-- Plotly.js 圖表庫 -->
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
@@ -13,23 +12,19 @@
     <!-- Marked.js 解析器 (支援 Markdown 表格與粗體) -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
-        // 初始化 Marked.js 設定，確保完美支援 GitHub 風格表格 (GFM)
         if (typeof marked !== 'undefined') {
-            marked.setOptions({
-                gfm: true,
-                breaks: true
-            });
+            marked.setOptions({ gfm: true, breaks: true });
         }
     </script>
 </head>
 <body>
 
     <div class="container">
-        <!-- 頂部 Header 區域 -->
+        <!-- Header 區域 -->
         <header class="brand-header">
             <div>
                 <div class="brand-title">🌱 NOURISH AI</div>
-                <div class="brand-desc">智慧視覺辨識 ‧ 質感飲食數據日誌</div>
+                <div class="brand-desc">智慧視覺辨識 ‧ 質感飲食與健康數據日誌</div>
             </div>
         </header>
 
@@ -37,7 +32,7 @@
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab(0)">🎯 1. 身體數據與目標</button>
             <button class="tab-btn" onclick="switchTab(1)">📷 2. AI 照片辨識與紀錄</button>
-            <button class="tab-btn" onclick="switchTab(2)">📊 3. 營養攝取圖表</button>
+            <button class="tab-btn" onclick="switchTab(2)">📊 3. 營養與水份圖表</button>
             <button class="tab-btn" onclick="switchTab(3)">🤖 4. AI 月度健康診斷</button>
         </div>
 
@@ -78,6 +73,7 @@
                             </select>
                         </div>
                     </div>
+                    <button class="btn" style="background:#556B2F; margin-top:10px;" onclick="saveWeightLog()">⚖️ 紀錄今日體重</button>
                 </div>
 
                 <div class="warm-box">
@@ -99,17 +95,19 @@
                         <b>🥑 建議脂肪：</b> <span id="target-f">67</span> g
                     </div>
 
-                    <!-- 生成一日菜單按鈕 -->
                     <div style="margin-top: 20px; text-align: center;">
                         <button class="btn" onclick="generateDailyMenu(event)">🥗 依照每日目標生成一日菜單</button>
                     </div>
                 </div>
             </div>
 
-            <!-- 一日菜單結果顯示區域 -->
+            <!-- 一日菜單結果顯示區 -->
             <div id="menu-result" class="warm-box" style="margin-top: 20px; display: none;">
-                <h3 style="margin-top: 0;">🍳 AI 建議一日菜單</h3>
-                <div id="menu-content"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="margin: 0;">🍳 AI 建議一日菜單</h3>
+                    <button class="btn" style="width:auto; padding:6px 12px; font-size:0.85rem;" onclick="copyToClipboard('menu-content')">📋 複製菜單</button>
+                </div>
+                <div id="menu-content" style="margin-top:15px;"></div>
             </div>
         </div>
 
@@ -118,8 +116,8 @@
             <div class="grid-2">
                 <div class="card">
                     <h3>💡 快速紀錄三步驟</h3>
-                    <div class="step-card"><div class="step-number">1</div><div class="step-title">輸入你的 Gemini API Key</div></div>
-                    <div class="step-card"><div class="step-number">2</div><div class="step-title">選擇模式或上傳食物相片</div></div>
+                    <div class="step-card"><div class="step-number">1</div><div class="step-title">輸入你的 Gemini API Key (僅存在本機)</div></div>
+                    <div class="step-card"><div class="step-number">2</div><div class="step-title">上傳食物相片或點擊常用食物</div></div>
                     <div class="step-card"><div class="step-number">3</div><div class="step-title">點擊 AI 辨識並確認儲存</div></div>
 
                     <div class="form-group" style="margin-top:20px;">
@@ -138,9 +136,25 @@
 
                 <div class="card">
                     <h3>📝 食物資料確認</h3>
-                    <div class="form-group">
+                    
+                    <!-- ⚡ 常用食物快捷點擊區域 -->
+                    <div class="quick-food-section">
+                        <label style="font-weight: bold; font-size: 0.88rem; color: #2D3B2D; display: block; margin-bottom: 8px;">
+                            ⚡ 常用食物快速帶入 (點擊即可自動填寫)：
+                        </label>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button type="button" class="quick-btn" onclick="quickFillFood('水煮蛋', 70, 6, 0.5, 5)">🥚 水煮蛋</button>
+                            <button type="button" class="quick-btn" onclick="quickFillFood('糙米飯 (半碗)', 140, 3, 30, 1)">🍚 糙米飯</button>
+                            <button type="button" class="quick-btn" onclick="quickFillFood('煎雞胸肉 (100g)', 165, 31, 0, 3.6)">🍗 雞胸肉</button>
+                            <button type="button" class="quick-btn" onclick="quickFillFood('蒸地瓜 (中)', 115, 2, 27, 0.2)">🍠 蒸地瓜</button>
+                            <button type="button" class="quick-btn" onclick="quickFillFood('無糖豆漿 (300ml)', 105, 10, 5, 5)">🥛 無糖豆漿</button>
+                            <button type="button" class="quick-btn" onclick="quickFillFood('美式咖啡', 10, 0.5, 2, 0)">☕ 美式咖啡</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 15px;">
                         <label>紀錄日期</label>
-                        <input type="date" id="record-date">
+                        <input type="date" id="record-date" onchange="renderFoodList(); renderCharts();">
                     </div>
                     <div class="form-group">
                         <label>食物名稱 *</label>
@@ -165,27 +179,65 @@
                         </div>
                     </div>
                     <p id="ai-desc" style="color:#7A8B7B; font-size:0.9rem;"></p>
-                    <button class="btn" onclick="saveFoodLog()">💾 確認送出並存檔 (儲存至瀏覽器)</button>
+                    <button class="btn" onclick="saveFoodLog()">💾 確認送出並存檔</button>
+                </div>
+            </div>
+
+            <!-- 今日已記錄食物清單與刪除管理 -->
+            <div class="card" style="margin-top:20px;">
+                <h3>📜 選定日期的飲食紀錄清單</h3>
+                <div id="food-list-container">
+                    <p style="color:#777;">今日尚無紀錄。</p>
                 </div>
             </div>
         </div>
 
-        <!-- Tab 3: 營養攝取圖表 -->
+        <!-- Tab 3: 營養與水份圖表 -->
         <div class="tab-content" id="tab-2">
             <div class="card">
-                <div class="form-group" style="max-width: 300px;">
-                    <label>📅 選擇檢視日期</label>
-                    <input type="date" id="view-date" onchange="renderCharts()">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div class="form-group" style="max-width: 250px; margin:0;">
+                        <label>📅 選擇檢視日期</label>
+                        <input type="date" id="view-date" onchange="renderCharts(); renderWater();">
+                    </div>
+                    <!-- 深夜/剩餘熱量補餐建議 -->
+                    <button class="btn" style="width:auto; margin:0; background:#8F9779;" onclick="getLateNightAdvice(event)">💡 剩餘熱量/補餐 AI 建議</button>
                 </div>
-                <div class="metrics-grid">
+
+                <!-- 飲水追蹤器 (Water Tracker) -->
+                <div class="warm-box" style="margin-top:20px;">
+                    <h4 style="margin-top:0;">💧 今日飲水追蹤 (目標: 2000 ml)</h4>
+                    <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
+                        <div style="font-size:1.8rem; font-weight:bold; color:#2E6B9E;">
+                            <span id="water-val">0</span> / 2000 ml
+                        </div>
+                        <button class="btn" style="width:auto; padding:6px 15px; background:#4A90E2;" onclick="addWater(250)">+250 ml 🥤</button>
+                        <button class="btn" style="width:auto; padding:6px 15px; background:#4A90E2;" onclick="addWater(500)">+500 ml 🍼</button>
+                        <button class="btn" style="width:auto; padding:6px 15px; background:#aaa;" onclick="resetWater()">重置 🔄</button>
+                    </div>
+                </div>
+
+                <!-- 剩餘熱量 AI 建議顯示區 -->
+                <div id="advice-result" class="warm-box" style="margin-top:15px; display:none; background:#F2F4EF;">
+                    <h4 style="margin-top:0;">🥗 AI 補餐技巧推薦</h4>
+                    <div id="advice-content"></div>
+                </div>
+
+                <div class="metrics-grid" style="margin-top:20px;">
                     <div class="metric-card"><h4>🔥 當日總熱量</h4><p id="m-cal">0 kcal</p></div>
                     <div class="metric-card"><h4>🥩 蛋白質</h4><p id="m-p">0 g</p></div>
                     <div class="metric-card"><h4>🍚 碳水化合物</h4><p id="m-c">0 g</p></div>
                     <div class="metric-card"><h4>🥑 脂肪</h4><p id="m-f">0 g</p></div>
                 </div>
+
                 <div class="grid-2" style="margin-top:20px;">
                     <div id="pie-chart" class="chart-box"></div>
                     <div id="bar-chart" class="chart-box"></div>
+                </div>
+
+                <!-- 體重變化趨勢圖 -->
+                <div style="margin-top:25px;">
+                    <div id="weight-chart" class="chart-box"></div>
                 </div>
             </div>
         </div>
@@ -201,13 +253,15 @@
                 <button class="btn" onclick="generateMonthlyDiagnosis(event)">✨ 產生健康診斷報告</button>
             </div>
             <div id="diag-result" class="warm-box" style="margin-top:20px; display:none;">
-                <h3 style="margin-top:0;">📋 AI 診斷報告</h3>
-                <div id="diag-content"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="margin: 0;">📋 AI 診斷報告</h3>
+                    <button class="btn" style="width:auto; padding:6px 12px; font-size:0.85rem;" onclick="copyToClipboard('diag-content')">📋 複製報告</button>
+                </div>
+                <div id="diag-content" style="margin-top:15px;"></div>
             </div>
         </div>
     </div>
 
-    <!-- JavaScript 腳本 (加上 ?v=999 強制打破舊檔快取) -->
-    <script src="script.js?v=999"></script>
+    <script src="script.js?v=1001"></script>
 </body>
 </html>
