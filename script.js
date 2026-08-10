@@ -2,7 +2,7 @@
 let base64Image = "";
 let imageMimeType = "image/jpeg";
 
-// 頁面載入初始化
+// 初始化
 window.onload = function() {
     const today = new Date().toISOString().split('T')[0];
     if (document.getElementById('record-date')) document.getElementById('record-date').value = today;
@@ -11,16 +11,16 @@ window.onload = function() {
     const currentMonth = new Date().toISOString().slice(0, 7);
     if (document.getElementById('diag-month')) document.getElementById('diag-month').value = currentMonth;
 
-    // 初次計算健康指標
     calculateHealth();
+    renderFoodList();
+    renderWater();
     
-    // 延遲繪製初始圖表
     setTimeout(() => {
         renderCharts();
     }, 150);
 };
 
-// Tab 切換邏輯
+// Tab 切換邏輯（包含圖表大小修正）
 function switchTab(index) {
     const tabs = document.querySelectorAll('.tab-btn');
     const contents = document.querySelectorAll('.tab-content');
@@ -35,14 +35,16 @@ function switchTab(index) {
         }
     });
 
+    // 當切換到「Tab 3: 營養與水份圖表」時，重新計算寬度與渲染
     if (index === 2) {
-        requestAnimationFrame(() => {
+        setTimeout(() => {
             renderCharts();
-            const pieChart = document.getElementById('pie-chart');
-            const barChart = document.getElementById('bar-chart');
-            if (pieChart && pieChart.data) Plotly.Plots.resize(pieChart);
-            if (barChart && barChart.data) Plotly.Plots.resize(barChart);
-        });
+            if (window.Plotly) {
+                Plotly.Plots.resize('pie-chart');
+                Plotly.Plots.resize('bar-chart');
+                Plotly.Plots.resize('weight-chart');
+            }
+        }, 100);
     }
 }
 
@@ -52,33 +54,15 @@ function calculateHealth() {
     if (!genderEl) return;
     const gender = genderEl.value;
     
-    const heightInput = document.getElementById('height');
-    const weightInput = document.getElementById('weight');
-    const ageInput = document.getElementById('age');
-
-    const height = parseFloat(heightInput?.value) || 0;
-    const weight = parseFloat(weightInput?.value) || 0;
-    const age = parseInt(ageInput?.value) || 0;
+    const height = parseFloat(document.getElementById('height')?.value) || 0;
+    const weight = parseFloat(document.getElementById('weight')?.value) || 0;
+    const age = parseInt(document.getElementById('age')?.value) || 0;
     const activity = parseFloat(document.getElementById('activity')?.value) || 1.2;
 
-    if (height < 50 || height > 250) {
-        if (heightInput && heightInput.value !== "") resetOutputs();
-        return;
-    }
-
-    if (age <= 0 || age > 120) {
-        if (ageInput && ageInput.value !== "") resetOutputs();
-        return;
-    }
-
-    if (!weight) {
-        resetOutputs();
-        return;
-    }
+    if (height < 50 || height > 250 || age <= 0 || !weight) return;
 
     const bmi = parseFloat((weight / ((height / 100) ** 2)).toFixed(1));
-    const bmiVal = document.getElementById('bmi-val');
-    if (bmiVal) bmiVal.innerText = bmi;
+    if (document.getElementById('bmi-val')) document.getElementById('bmi-val').innerText = bmi;
 
     const bmiBadge = document.getElementById('bmi-badge');
     const bmiAdvice = document.getElementById('bmi-advice');
@@ -87,34 +71,29 @@ function calculateHealth() {
     bmr += (gender === '男') ? 5 : -161;
     const tdee = Math.round(bmr * activity);
 
-    if (document.getElementById('tdee-val')) {
-        document.getElementById('tdee-val').innerText = tdee;
-    }
+    if (document.getElementById('tdee-val')) document.getElementById('tdee-val').innerText = tdee;
 
     let targetCal = tdee;
 
     if (bmi < 18.5) {
         if (bmiBadge) { bmiBadge.innerText = "體重過輕"; bmiBadge.style.background = "#3498db"; }
-        if (bmiAdvice) bmiAdvice.innerText = "建議適度增加熱量與蛋白質攝取，已為您自動規劃溫暖增肌目標 (+300 kcal)。";
+        if (bmiAdvice) bmiAdvice.innerText = "建議適度增加熱量與蛋白質攝取 (+300 kcal)。";
         targetCal = tdee + 300;
     } else if (bmi < 24) {
         if (bmiBadge) { bmiBadge.innerText = "健康體位"; bmiBadge.style.background = "#2ecc71"; }
-        if (bmiAdvice) bmiAdvice.innerText = "太棒了！你的體重處於理想範圍，請繼續保持均衡飲食與運動！";
+        if (bmiAdvice) bmiAdvice.innerText = "太棒了！你的體重處於理想範圍，請繼續保持！";
         targetCal = tdee;
     } else if (bmi < 27) {
         if (bmiBadge) { bmiBadge.innerText = "體重過重"; bmiBadge.style.background = "#f39c12"; }
-        if (bmiAdvice) bmiAdvice.innerText = "建議稍微控管每日總熱量，已為您自動規劃溫和減脂目標 (-300 kcal)。";
+        if (bmiAdvice) bmiAdvice.innerText = "建議控管每日總熱量，已為您規劃溫和減脂 (-300 kcal)。";
         targetCal = tdee - 300;
     } else {
         if (bmiBadge) { bmiBadge.innerText = "肥胖"; bmiBadge.style.background = "#e74c3c"; }
-        if (bmiAdvice) bmiAdvice.innerText = "建議控管每日總熱量，已為您自動規劃積極減脂目標 (-500 kcal)。";
+        if (bmiAdvice) bmiAdvice.innerText = "建議控管每日總熱量，已為您規劃積極減脂 (-500 kcal)。";
         targetCal = tdee - 500;
     }
 
-    if (document.getElementById('target-cal')) {
-        document.getElementById('target-cal').innerText = Math.round(targetCal);
-    }
-
+    if (document.getElementById('target-cal')) document.getElementById('target-cal').innerText = Math.round(targetCal);
     if (document.getElementById('target-p')) document.getElementById('target-p').innerText = Math.round((targetCal * 0.25) / 4);
     if (document.getElementById('target-c')) document.getElementById('target-c').innerText = Math.round((targetCal * 0.45) / 4);
     if (document.getElementById('target-f')) document.getElementById('target-f').innerText = Math.round((targetCal * 0.30) / 9);
@@ -122,26 +101,28 @@ function calculateHealth() {
     renderCharts();
 }
 
-function resetOutputs() {
-    if (document.getElementById('bmi-val')) document.getElementById('bmi-val').innerText = "--";
-    if (document.getElementById('tdee-val')) document.getElementById('tdee-val').innerText = "--";
-    if (document.getElementById('target-cal')) document.getElementById('target-cal').innerText = "--";
-    if (document.getElementById('target-p')) document.getElementById('target-p').innerText = "--";
-    if (document.getElementById('target-c')) document.getElementById('target-c').innerText = "--";
-    if (document.getElementById('target-f')) document.getElementById('target-f').innerText = "--";
-    if (document.getElementById('bmi-badge')) document.getElementById('bmi-badge').innerText = "數據無效";
-    if (document.getElementById('bmi-advice')) document.getElementById('bmi-advice').innerText = "請輸入有效的年齡 (1~120) 與身高 (50~250 cm)。";
+// 紀錄體重歷程
+function saveWeightLog() {
+    const date = new Date().toISOString().split('T')[0];
+    const weight = parseFloat(document.getElementById('weight').value) || 0;
+    if (!weight) return alert("請輸入有效體重！");
+
+    let weights = JSON.parse(localStorage.getItem('weight_logs') || '[]');
+    weights = weights.filter(item => item.date !== date);
+    weights.push({ date, weight });
+    weights.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    localStorage.setItem('weight_logs', JSON.stringify(weights));
+    alert("⚖️ 今日體重已成功存檔！");
+    renderCharts();
 }
 
-// 🥗 生成一日菜單 (包含 Markdown HTML 轉換)
+// 一日菜單生成
 async function generateDailyMenu(e) {
     const apiKey = document.getElementById('api-key')?.value.trim();
-    
     if (!apiKey) {
-        alert("⚠️ 請先前往「2. AI 照片辨識與紀錄」分頁輸入你的 Gemini API Key！");
+        alert("⚠️ 請先前往「2. AI 照片辨識與紀錄」輸入你的 Gemini API Key！");
         switchTab(1);
-        const keyInput = document.getElementById('api-key');
-        if (keyInput) keyInput.focus();
         return;
     }
 
@@ -150,69 +131,40 @@ async function generateDailyMenu(e) {
     const targetC = document.getElementById('target-c')?.innerText;
     const targetF = document.getElementById('target-f')?.innerText;
 
-    if (!targetCal || targetCal === "--") {
-        return alert("請先輸入正確的身高、體重與年齡！");
-    }
-
     const btn = e ? e.target : document.querySelector("button[onclick*='generateDailyMenu']");
     const originalText = btn.innerText;
-    btn.innerText = "⏳ 正在為您設計專屬食譜...";
+    btn.innerText = "⏳ 正在設計專屬菜單...";
     btn.disabled = true;
 
-    const randomSeed = Math.floor(Math.random() * 100000);
-
-    const prompt = `你是一位專業的營養師。請為使用者設計一份「一日健康飲食菜單」（包含早餐、午餐、晚餐、點心）。
-要求如下：
-1. 每日總目標熱量：約 ${targetCal} kcal。
-2. 三大營養素目標：蛋白質 ${targetP}g、碳水化合物 ${targetC}g、脂肪 ${targetF}g。
-3. 菜單食材必須均衡多樣，且每一餐的食材【嚴禁重複】。
-4. 請列出每餐的：餐點名稱、估算熱量(kcal)、蛋白質(g)、碳水(g)、脂肪(g) 以及簡短備餐說明。
-5. 隨機風格參數：${randomSeed}（每次生成請給予不同的菜餚搭配組合）。
-
-請使用清楚的 Markdown 格式（可以包含表格、標題、粗體）輸出結果，語氣親切專業。`;
+    const prompt = `設計一份一日健康飲食菜單（早餐、午餐、晚餐、點心）。
+目標熱量：${targetCal} kcal，蛋白質 ${targetP}g、碳水 ${targetC}g、脂肪 ${targetF}g。
+食材請均衡多樣且不重複。請用 Markdown 表格與標題輸出，語氣親切專業。`;
 
     try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-            })
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
-
         const data = await res.json();
-        
-        if (data.error) {
-            alert(`API 錯誤：${data.error.message}`);
-            return;
-        }
+        if (data.error) throw new Error(data.error.message);
 
         const menuText = data.candidates[0].content.parts[0].text;
-        
         const menuResult = document.getElementById('menu-result');
         const menuContent = document.getElementById('menu-content');
         
-        if (menuResult && menuContent) {
-            // 💥 核心：用 marked.parse 轉成 HTML 並塞入 innerHTML
-            if (typeof marked !== 'undefined') {
-                menuContent.innerHTML = marked.parse(menuText);
-            } else {
-                menuContent.innerText = menuText;
-            }
-            
-            menuResult.style.display = 'block';
-            menuResult.scrollIntoView({ behavior: 'smooth' });
-        }
+        menuContent.innerHTML = typeof marked !== 'undefined' ? marked.parse(menuText) : menuText;
+        menuResult.style.display = 'block';
+        menuResult.scrollIntoView({ behavior: 'smooth' });
     } catch (err) {
-        console.error(err);
-        alert("菜單生成失敗，請確認網路連線與 API Key 是否正確。");
+        alert(`生成失敗: ${err.message}`);
     } finally {
         btn.innerText = originalText;
         btn.disabled = false;
     }
 }
 
-// 2. 照片預覽與 Base64 轉換
+// 照片預覽與辨識
 function previewImage(event) {
     const file = event.target.files[0];
     if (file) {
@@ -227,84 +179,59 @@ function previewImage(event) {
     }
 }
 
-// 呼叫 Gemini 辨識食物
 async function analyzeFoodImage(e) {
     const apiKey = document.getElementById('api-key').value.trim();
     if (!apiKey) return alert("請先輸入 Gemini API Key！");
-    if (!base64Image) return alert("請先選擇或上傳食物照片！");
+    if (!base64Image) return alert("請先上傳照片！");
 
     const btn = e ? e.target : document.querySelector("button[onclick*='analyzeFoodImage']");
-    const originalText = btn.innerText;
     btn.innerText = "⏳ AI 分析中...";
     btn.disabled = true;
 
-    const prompt = `請分析這張照片中的食物，並嚴格只回傳純 JSON 格式，不要包含任何 markdown 標籤（如 \`\`\`json）：
-{
-  "food_name": "食物名稱",
-  "calories": 數字,
-  "protein": 數字,
-  "carbs": 數字,
-  "fat": 數字,
-  "description": "簡短評語"
-}`;
+    const prompt = `分析照片食物，回傳純 JSON 格式（不要包含 markdown）：
+{ "food_name": "名稱", "calories": 數字, "protein": 數字, "carbs": 數字, "fat": 數字, "description": "簡評" }`;
 
-    const models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash'];
-    let lastErrorMsg = "";
+    try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: imageMimeType, data: base64Image } }] }]
+            })
+        });
+        const data = await res.json();
+        let rawText = data.candidates[0].content.parts[0].text.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const food = JSON.parse(rawText);
 
-    for (const model of models) {
-        try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [
-                            { text: prompt },
-                            { inline_data: { mime_type: imageMimeType, data: base64Image } }
-                        ]
-                    }]
-                })
-            });
-
-            const data = await res.json();
-
-            if (data.error) {
-                lastErrorMsg = `[${model}] ${data.error.message}`;
-                continue;
-            }
-
-            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-                lastErrorMsg = `[${model}] 無法解析此照片內容`;
-                continue;
-            }
-
-            let rawText = data.candidates[0].content.parts[0].text;
-            rawText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
-
-            const food = JSON.parse(rawText);
-
-            document.getElementById('food-name').value = food.food_name || "";
-            document.getElementById('food-cal').value = food.calories || 0;
-            document.getElementById('food-p').value = food.protein || 0;
-            document.getElementById('food-c').value = food.carbs || 0;
-            document.getElementById('food-f').value = food.fat || 0;
-            document.getElementById('ai-desc').innerText = `💡 AI 評估：${food.description || '辨識成功'}`;
-
-            alert(`✨ 辨識成功！(採用模型: ${model})`);
-            btn.innerText = originalText;
-            btn.disabled = false;
-            return;
-        } catch (err) {
-            lastErrorMsg = err.message;
-        }
+        document.getElementById('food-name').value = food.food_name || "";
+        document.getElementById('food-cal').value = food.calories || 0;
+        document.getElementById('food-p').value = food.protein || 0;
+        document.getElementById('food-c').value = food.carbs || 0;
+        document.getElementById('food-f').value = food.fat || 0;
+        document.getElementById('ai-desc').innerText = `💡 AI 評估：${food.description || '成功'}`;
+        alert("✨ 辨識成功！");
+    } catch (err) {
+        alert(`辨識失敗: ${err.message}`);
+    } finally {
+        btn.innerText = "✨ 開始 AI 自動分析";
+        btn.disabled = false;
     }
-
-    btn.innerText = originalText;
-    btn.disabled = false;
-    alert(`🚨 辨識失敗！請檢查 API Key 是否正確。\n詳細錯誤訊息：${lastErrorMsg}`);
 }
 
-// 儲存紀錄至 LocalStorage
+// ⚡ 常用食物快速帶入功能
+function quickFillFood(name, cal, p, c, f) {
+    document.getElementById('food-name').value = name;
+    document.getElementById('food-cal').value = cal;
+    document.getElementById('food-p').value = p;
+    document.getElementById('food-c').value = c;
+    document.getElementById('food-f').value = f;
+    
+    if (document.getElementById('ai-desc')) {
+        document.getElementById('ai-desc').innerText = `⚡ 已自動帶入常用食物數據：${name}`;
+    }
+}
+
+// 儲存與管理飲食清單
 function saveFoodLog() {
     const date = document.getElementById('record-date').value;
     const name = document.getElementById('food-name').value.trim();
@@ -323,13 +250,135 @@ function saveFoodLog() {
     alert("💾 紀錄已儲存！");
     document.getElementById('food-name').value = "";
     
-    if (document.getElementById('view-date')) {
-        document.getElementById('view-date').value = date;
-    }
+    renderFoodList();
     renderCharts();
 }
 
-// 3. 渲染 Plotly 圖表
+// 渲染當日食物列表與刪除
+function renderFoodList() {
+    const date = document.getElementById('record-date')?.value;
+    const container = document.getElementById('food-list-container');
+    if (!container || !date) return;
+
+    const logs = JSON.parse(localStorage.getItem('food_logs') || '[]');
+    const dayLogs = logs.filter(item => item.date === date);
+
+    if (dayLogs.length === 0) {
+        container.innerHTML = `<p style="color:#777;">${date} 尚無飲食紀錄。</p>`;
+        return;
+    }
+
+    let html = `<table style="width:100%; border-collapse:collapse;">
+        <thead>
+            <tr style="text-align:left; border-bottom:2px solid #ddd;">
+                <th style="padding:8px;">食物</th><th style="padding:8px;">熱量</th><th style="padding:8px;">P/C/F (g)</th><th style="padding:8px;">操作</th>
+            </tr>
+        </thead><tbody>`;
+
+    dayLogs.forEach(item => {
+        html += `<tr style="border-bottom:1px solid #eee;">
+            <td style="padding:8px; font-weight:bold;">${item.name}</td>
+            <td style="padding:8px;">${item.cal} kcal</td>
+            <td style="padding:8px; font-size:0.85rem; color:#555;">${item.p} / ${item.c} / ${item.f}</td>
+            <td style="padding:8px;"><button style="background:#e74c3c; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;" onclick="deleteFoodLog(${item.id})">🗑️ 刪除</button></td>
+        </tr>`;
+    });
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+}
+
+function deleteFoodLog(id) {
+    if (!confirm("確定要刪除這筆紀錄嗎？")) return;
+    let logs = JSON.parse(localStorage.getItem('food_logs') || '[]');
+    logs = logs.filter(item => item.id !== id);
+    localStorage.setItem('food_logs', JSON.stringify(logs));
+    renderFoodList();
+    renderCharts();
+}
+
+// 飲水管理
+function addWater(amount) {
+    const date = document.getElementById('view-date')?.value || new Date().toISOString().split('T')[0];
+    let waterLogs = JSON.parse(localStorage.getItem('water_logs') || '{}');
+    waterLogs[date] = (waterLogs[date] || 0) + amount;
+    localStorage.setItem('water_logs', JSON.stringify(waterLogs));
+    renderWater();
+}
+
+function resetWater() {
+    const date = document.getElementById('view-date')?.value || new Date().toISOString().split('T')[0];
+    let waterLogs = JSON.parse(localStorage.getItem('water_logs') || '{}');
+    waterLogs[date] = 0;
+    localStorage.setItem('water_logs', JSON.stringify(waterLogs));
+    renderWater();
+}
+
+function renderWater() {
+    const date = document.getElementById('view-date')?.value || new Date().toISOString().split('T')[0];
+    const waterLogs = JSON.parse(localStorage.getItem('water_logs') || '{}');
+    const val = waterLogs[date] || 0;
+    if (document.getElementById('water-val')) document.getElementById('water-val').innerText = val;
+}
+
+// 剩餘熱量 AI 建議
+async function getLateNightAdvice(e) {
+    const apiKey = document.getElementById('api-key')?.value.trim();
+    if (!apiKey) return alert("⚠️ 請先在 Tab 2 輸入 API Key！");
+
+    const date = document.getElementById('view-date').value;
+    const logs = JSON.parse(localStorage.getItem('food_logs') || '[]');
+    const dayLogs = logs.filter(item => item.date === date);
+
+    let totalCal = 0, totalP = 0, totalC = 0, totalF = 0;
+    dayLogs.forEach(i => { totalCal += i.cal; totalP += i.p; totalC += i.c; totalF += i.f; });
+
+    const targetCal = parseFloat(document.getElementById('target-cal')?.innerText) || 2000;
+    const targetP = parseFloat(document.getElementById('target-p')?.innerText) || 125;
+    const targetC = parseFloat(document.getElementById('target-c')?.innerText) || 225;
+    const targetF = parseFloat(document.getElementById('target-f')?.innerText) || 67;
+
+    const diffCal = targetCal - totalCal;
+    const diffP = targetP - totalP;
+
+    const btn = e.target;
+    btn.innerText = "⏳ 分析補餐建議中...";
+    btn.disabled = true;
+
+    const prompt = `使用者今日已攝取 ${totalCal} kcal（蛋白質 ${totalP}g），目標是 ${targetCal} kcal（蛋白質 ${targetP}g）。
+目前熱量剩餘 ${diffCal} kcal，蛋白質還差 ${diffP}g。
+請給予 150 字左右的補餐/宵夜技巧建議（若超標請給予消化或明日調整建議）。請簡明扼要。`;
+
+    try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        const data = await res.json();
+        const advice = data.candidates[0].content.parts[0].text;
+
+        const adviceRes = document.getElementById('advice-result');
+        document.getElementById('advice-content').innerHTML = typeof marked !== 'undefined' ? marked.parse(advice) : advice;
+        adviceRes.style.display = 'block';
+    } catch (err) {
+        alert("分析失敗，請檢查 API Key。");
+    } finally {
+        btn.innerText = "💡 剩餘熱量/補餐 AI 建議";
+        btn.disabled = false;
+    }
+}
+
+// 複製到剪貼簿
+function copyToClipboard(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    navigator.clipboard.writeText(el.innerText).then(() => {
+        alert("📋 已成功複製內容到剪貼簿！");
+    });
+}
+
+// 3. 圖表渲染 (修正自適應)
 function renderCharts() {
     const viewDateEl = document.getElementById('view-date');
     if (!viewDateEl) return;
@@ -350,132 +399,88 @@ function renderCharts() {
     if (document.getElementById('m-c')) document.getElementById('m-c').innerText = `${totalC} g`;
     if (document.getElementById('m-f')) document.getElementById('m-f').innerText = `${totalF} g`;
 
-    const pCal = totalP * 4;
-    const cCal = totalC * 4;
-    const fCal = totalF * 9;
+    const pCal = totalP * 4, cCal = totalC * 4, fCal = totalF * 9;
     const hasData = (pCal + cCal + fCal) > 0;
 
-    const pieData = [{
+    // 圓餅圖
+    Plotly.newPlot('pie-chart', [{
         values: hasData ? [pCal, cCal, fCal] : [1, 1, 1],
         labels: ['蛋白質', '碳水化合物', '脂肪'],
         type: 'pie',
-        marker: { colors: hasData ? ['#7A8B7B', '#A3B18A', '#E0A96D'] : ['#E2E8E0', '#E2E8E0', '#E2E8E0'] },
-        hoverinfo: hasData ? 'label+percent+value' : 'none',
-        textinfo: hasData ? 'percent' : 'none'
-    }];
+        marker: { colors: hasData ? ['#7A8B7B', '#A3B18A', '#E0A96D'] : ['#E2E8E0', '#E2E8E0', '#E2E8E0'] }
+    }], {
+        title: { text: `${viewDate} 熱量比例`, font: { size: 15 } },
+        height: 300, margin: { t: 40, b: 30, l: 10, r: 10 },
+        autosize: true
+    }, { responsive: true, displayModeBar: false });
 
-    const pieLayout = {
-        title: { text: `${viewDate} 熱量來源比例`, font: { size: 15, color: '#2D3B2D' } },
-        autosize: true,
-        height: 320,
-        margin: { t: 40, b: 40, l: 10, r: 10 },
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        legend: { orientation: 'h', y: -0.15 }
-    };
-
-    if (document.getElementById('pie-chart')) {
-        Plotly.newPlot('pie-chart', pieData, pieLayout, { responsive: true, displayModeBar: false });
-    }
-
+    // 長條圖
     const targetCal = parseFloat(document.getElementById('target-cal')?.innerText) || 2000;
     const targetP = parseFloat(document.getElementById('target-p')?.innerText) || 125;
     const targetC = parseFloat(document.getElementById('target-c')?.innerText) || 225;
     const targetF = parseFloat(document.getElementById('target-f')?.innerText) || 67;
 
-    const barData = [
-        {
-            x: ['熱量(kcal)', '蛋白質(g)', '碳水(g)', '脂肪(g)'],
-            y: [totalCal, totalP, totalC, totalF],
-            name: '實際攝取',
-            type: 'bar',
-            marker: { color: '#2D3B2D' }
-        },
-        {
-            x: ['熱量(kcal)', '蛋白質(g)', '碳水(g)', '脂肪(g)'],
-            y: [targetCal, targetP, targetC, targetF],
-            name: '建議目標',
-            type: 'bar',
-            marker: { color: '#CBD5C8' }
-        }
-    ];
+    Plotly.newPlot('bar-chart', [
+        { x: ['熱量(kcal)', '蛋白質(g)', '碳水(g)', '脂肪(g)'], y: [totalCal, totalP, totalC, totalF], name: '實際', type: 'bar', marker: { color: '#2D3B2D' } },
+        { x: ['熱量(kcal)', '蛋白質(g)', '碳水(g)', '脂肪(g)'], y: [targetCal, targetP, targetC, targetF], name: '目標', type: 'bar', marker: { color: '#CBD5C8' } }
+    ], {
+        title: { text: '攝取量 vs 目標', font: { size: 15 } },
+        barmode: 'group', height: 300, margin: { t: 40, b: 30, l: 30, r: 10 },
+        autosize: true
+    }, { responsive: true, displayModeBar: false });
 
-    const barLayout = {
-        title: { text: '攝取量 vs 目標值', font: { size: 15, color: '#2D3B2D' } },
-        autosize: true,
-        barmode: 'group',
-        height: 320,
-        margin: { t: 40, b: 40, l: 35, r: 10 },
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        legend: { orientation: 'h', y: -0.25 }
-    };
+    // 體重趨勢折線圖
+    const weights = JSON.parse(localStorage.getItem('weight_logs') || '[]');
+    const xDates = weights.map(w => w.date);
+    const yWeights = weights.map(w => w.weight);
 
-    if (document.getElementById('bar-chart')) {
-        Plotly.newPlot('bar-chart', barData, barLayout, { responsive: true, displayModeBar: false });
-    }
+    Plotly.newPlot('weight-chart', [{
+        x: xDates,
+        y: yWeights,
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: { color: '#556B2F', width: 3 },
+        marker: { size: 8 }
+    }], {
+        title: { text: '📈 歷史體重變化趨勢 (kg)', font: { size: 15 } },
+        height: 280, margin: { t: 40, b: 40, l: 35, r: 15 },
+        autosize: true
+    }, { responsive: true, displayModeBar: false });
 }
 
-// 4. AI 月度健康診斷
+// 4. 月度診斷
 async function generateMonthlyDiagnosis(e) {
     const apiKey = document.getElementById('api-key').value.trim();
-    if (!apiKey) {
-        alert("⚠️ 請先前往「2. AI 照片辨識與紀錄」分頁輸入你的 Gemini API Key！");
-        switchTab(1);
-        return;
-    }
+    if (!apiKey) return alert("⚠️ 請先至 Tab 2 輸入 API Key！");
 
     const month = document.getElementById('diag-month').value;
-    if (!month) return alert("請選擇分析月份！");
-
     const logs = JSON.parse(localStorage.getItem('food_logs') || '[]');
     const monthLogs = logs.filter(item => item.date.startsWith(month));
 
-    if (monthLogs.length === 0) {
-        return alert("該月份尚無任何飲食紀錄，無法進行 AI 診斷！");
-    }
+    if (monthLogs.length === 0) return alert("該月份尚無飲食紀錄！");
 
-    const btn = e ? e.target : document.querySelector("button[onclick*='generateMonthlyDiagnosis']");
-    const originalText = btn.innerText;
-    btn.innerText = "🤖 AI 診斷分析中...";
+    const btn = e.target;
+    btn.innerText = "🤖 AI 分析中...";
     btn.disabled = true;
 
-    const prompt = `你是一位專業的營養師。以下是使用者在 ${month} 月份的飲食紀錄數據：
-${JSON.stringify(monthLogs, null, 2)}
-
-請分析其飲食習慣，給予 300 字左右的月度健康診斷報告，包含優點、改進建議與下個月的飲食目標調整建議。`;
+    const prompt = `身為營養師，分析使用者 ${month} 月飲食數據：\n${JSON.stringify(monthLogs, null, 2)}\n請給予 300 字月度健康診斷與建議，並用 Markdown 格式。`;
 
     try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-            })
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
-
         const data = await res.json();
-        
-        if (data.error) {
-            alert(`API 錯誤：${data.error.message}`);
-            return;
-        }
-
         const report = data.candidates[0].content.parts[0].text;
+
         const diagContent = document.getElementById('diag-content');
-        if (diagContent) {
-            if (typeof marked !== 'undefined') {
-                diagContent.innerHTML = marked.parse(report);
-            } else {
-                diagContent.innerText = report;
-            }
-        }
+        diagContent.innerHTML = typeof marked !== 'undefined' ? marked.parse(report) : report;
         document.getElementById('diag-result').style.display = 'block';
     } catch (err) {
-        console.error(err);
-        alert("產生診斷報告失敗，請確認網路連線與 API Key。");
+        alert("產生失敗，請確認 API Key。");
     } finally {
-        btn.innerText = originalText;
+        btn.innerText = "✨ 產生健康診斷報告";
         btn.disabled = false;
     }
 }
