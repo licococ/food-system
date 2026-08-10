@@ -20,7 +20,7 @@ window.onload = function() {
     }, 150);
 };
 
-// Tab 切換邏輯 (防止 Plotly 寬度爆破)
+// Tab 切換邏輯
 function switchTab(index) {
     const tabs = document.querySelectorAll('.tab-btn');
     const contents = document.querySelectorAll('.tab-content');
@@ -35,7 +35,6 @@ function switchTab(index) {
         }
     });
 
-    // 切換到 Tab 2 (索引 2 的營養攝取圖表) 重新計算長寬
     if (index === 2) {
         requestAnimationFrame(() => {
             renderCharts();
@@ -47,7 +46,7 @@ function switchTab(index) {
     }
 }
 
-// 1. 計算 BMI 與 TDEE，並根據 BMI 自動判定給予熱量建議（含防呆驗證）
+// 1. 計算 BMI 與 TDEE
 function calculateHealth() {
     const genderEl = document.querySelector('input[name="gender"]:checked');
     if (!genderEl) return;
@@ -62,13 +61,11 @@ function calculateHealth() {
     const age = parseInt(ageInput?.value) || 0;
     const activity = parseFloat(document.getElementById('activity')?.value) || 1.2;
 
-    // 身高限制：50 ~ 250 公分
     if (height < 50 || height > 250) {
         if (heightInput && heightInput.value !== "") resetOutputs();
         return;
     }
 
-    // 年齡限制：1 ~ 120 歲
     if (age <= 0 || age > 120) {
         if (ageInput && ageInput.value !== "") resetOutputs();
         return;
@@ -79,7 +76,6 @@ function calculateHealth() {
         return;
     }
 
-    // 1. 計算 BMI
     const bmi = parseFloat((weight / ((height / 100) ** 2)).toFixed(1));
     const bmiVal = document.getElementById('bmi-val');
     if (bmiVal) bmiVal.innerText = bmi;
@@ -87,7 +83,6 @@ function calculateHealth() {
     const bmiBadge = document.getElementById('bmi-badge');
     const bmiAdvice = document.getElementById('bmi-advice');
 
-    // 2. 計算 BMR 與 TDEE
     let bmr = (10 * weight) + (6.25 * height) - (5 * age);
     bmr += (gender === '男') ? 5 : -161;
     const tdee = Math.round(bmr * activity);
@@ -96,7 +91,6 @@ function calculateHealth() {
         document.getElementById('tdee-val').innerText = tdee;
     }
 
-    // 3. 根據 BMI 自動判定建議熱量
     let targetCal = tdee;
 
     if (bmi < 18.5) {
@@ -117,12 +111,10 @@ function calculateHealth() {
         targetCal = tdee - 500;
     }
 
-    // 4. 更新畫面上的建議熱量與三大營養素
     if (document.getElementById('target-cal')) {
         document.getElementById('target-cal').innerText = Math.round(targetCal);
     }
 
-    // 三大營養素分配：蛋白質 25%, 碳水 45%, 脂肪 30%
     if (document.getElementById('target-p')) document.getElementById('target-p').innerText = Math.round((targetCal * 0.25) / 4);
     if (document.getElementById('target-c')) document.getElementById('target-c').innerText = Math.round((targetCal * 0.45) / 4);
     if (document.getElementById('target-f')) document.getElementById('target-f').innerText = Math.round((targetCal * 0.30) / 9);
@@ -130,7 +122,6 @@ function calculateHealth() {
     renderCharts();
 }
 
-// 防呆重置顯示區域
 function resetOutputs() {
     if (document.getElementById('bmi-val')) document.getElementById('bmi-val').innerText = "--";
     if (document.getElementById('tdee-val')) document.getElementById('tdee-val').innerText = "--";
@@ -142,14 +133,13 @@ function resetOutputs() {
     if (document.getElementById('bmi-advice')) document.getElementById('bmi-advice').innerText = "請輸入有效的年齡 (1~120) 與身高 (50~250 cm)。";
 }
 
-// 🥗 依熱量目標生成一日菜單（附自動跳轉導引）
+// 🥗 生成一日菜單 (含 Markdown 解析)
 async function generateDailyMenu(e) {
     const apiKey = document.getElementById('api-key')?.value.trim();
     
-    // 防呆：如果沒填寫 API Key，自動提示並跳轉到 Tab 2
     if (!apiKey) {
         alert("⚠️ 請先前往「2. AI 照片辨識與紀錄」分頁輸入你的 Gemini API Key！");
-        switchTab(1); // 切換到 Tab 2
+        switchTab(1);
         const keyInput = document.getElementById('api-key');
         if (keyInput) keyInput.focus();
         return;
@@ -169,7 +159,6 @@ async function generateDailyMenu(e) {
     btn.innerText = "⏳ 正在為您設計專屬食譜...";
     btn.disabled = true;
 
-    // 隨機 Seed 避免每次生成的菜單重複
     const randomSeed = Math.floor(Math.random() * 100000);
 
     const prompt = `你是一位專業的營養師。請為使用者設計一份「一日健康飲食菜單」（包含早餐、午餐、晚餐、點心）。
@@ -180,7 +169,7 @@ async function generateDailyMenu(e) {
 4. 請列出每餐的：餐點名稱、估算熱量(kcal)、蛋白質(g)、碳水(g)、脂肪(g) 以及簡短備餐說明。
 5. 隨機風格參數：${randomSeed}（每次生成請給予不同的菜餚搭配組合）。
 
-請直接輸出條列式結果，語氣親切專業。`;
+請使用清楚的 Markdown 格式輸出結果，語氣親切專業。`;
 
     try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
@@ -204,7 +193,13 @@ async function generateDailyMenu(e) {
         const menuContent = document.getElementById('menu-content');
         
         if (menuResult && menuContent) {
-            menuContent.innerText = menuText;
+            // 使用 marked 將 Markdown 轉換為高質感 HTML
+            if (typeof marked !== 'undefined') {
+                menuContent.innerHTML = marked.parse(menuText);
+            } else {
+                menuContent.innerText = menuText;
+            }
+            
             menuResult.style.display = 'block';
             menuResult.scrollIntoView({ behavior: 'smooth' });
         }
@@ -355,7 +350,6 @@ function renderCharts() {
     if (document.getElementById('m-c')) document.getElementById('m-c').innerText = `${totalC} g`;
     if (document.getElementById('m-f')) document.getElementById('m-f').innerText = `${totalF} g`;
 
-    // 1. 圓餅圖
     const pCal = totalP * 4;
     const cCal = totalC * 4;
     const fCal = totalF * 9;
@@ -384,7 +378,6 @@ function renderCharts() {
         Plotly.newPlot('pie-chart', pieData, pieLayout, { responsive: true, displayModeBar: false });
     }
 
-    // 2. 長條圖
     const targetCal = parseFloat(document.getElementById('target-cal')?.innerText) || 2000;
     const targetP = parseFloat(document.getElementById('target-p')?.innerText) || 125;
     const targetC = parseFloat(document.getElementById('target-c')?.innerText) || 225;
@@ -469,7 +462,14 @@ ${JSON.stringify(monthLogs, null, 2)}
         }
 
         const report = data.candidates[0].content.parts[0].text;
-        document.getElementById('diag-content').innerText = report;
+        const diagContent = document.getElementById('diag-content');
+        if (diagContent) {
+            if (typeof marked !== 'undefined') {
+                diagContent.innerHTML = marked.parse(report);
+            } else {
+                diagContent.innerText = report;
+            }
+        }
         document.getElementById('diag-result').style.display = 'block';
     } catch (err) {
         console.error(err);
