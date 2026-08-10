@@ -35,7 +35,7 @@ function switchTab(index) {
         }
     });
 
-    // 切換到 Tab 2 重新計算長寬
+    // 切換到 Tab 2 (索引 2 的營養攝取圖表) 重新計算長寬
     if (index === 2) {
         requestAnimationFrame(() => {
             renderCharts();
@@ -101,7 +101,7 @@ function calculateHealth() {
 
     if (bmi < 18.5) {
         if (bmiBadge) { bmiBadge.innerText = "體重過輕"; bmiBadge.style.background = "#3498db"; }
-        if (bmiAdvice) bmiAdvice.innerText = "建議適度增加熱量與蛋白質攝取，已為您自動規劃溫和增肌目標 (+300 kcal)。";
+        if (bmiAdvice) bmiAdvice.innerText = "建議適度增加熱量與蛋白質攝取，已為您自動規劃溫暖增肌目標 (+300 kcal)。";
         targetCal = tdee + 300;
     } else if (bmi < 24) {
         if (bmiBadge) { bmiBadge.innerText = "健康體位"; bmiBadge.style.background = "#2ecc71"; }
@@ -142,10 +142,18 @@ function resetOutputs() {
     if (document.getElementById('bmi-advice')) document.getElementById('bmi-advice').innerText = "請輸入有效的年齡 (1~120) 與身高 (50~250 cm)。";
 }
 
-// 💥 新增功能：依照每日目標自動生成不重複的一日菜單 💥
+// 🥗 依熱量目標生成一日菜單（附自動跳轉導引）
 async function generateDailyMenu(e) {
     const apiKey = document.getElementById('api-key')?.value.trim();
-    if (!apiKey) return alert("請先於 Tab 2 輸入你的 Gemini API Key！");
+    
+    // 防呆：如果沒填寫 API Key，自動提示並跳轉到 Tab 2
+    if (!apiKey) {
+        alert("⚠️ 請先前往「2. AI 照片辨識與紀錄」分頁輸入你的 Gemini API Key！");
+        switchTab(1); // 切換到 Tab 2
+        const keyInput = document.getElementById('api-key');
+        if (keyInput) keyInput.focus();
+        return;
+    }
 
     const targetCal = document.getElementById('target-cal')?.innerText;
     const targetP = document.getElementById('target-p')?.innerText;
@@ -153,7 +161,7 @@ async function generateDailyMenu(e) {
     const targetF = document.getElementById('target-f')?.innerText;
 
     if (!targetCal || targetCal === "--") {
-        return alert("請先在左側輸入正確的身高、體重與年齡！");
+        return alert("請先輸入正確的身高、體重與年齡！");
     }
 
     const btn = e ? e.target : document.querySelector("button[onclick*='generateDailyMenu']");
@@ -161,10 +169,10 @@ async function generateDailyMenu(e) {
     btn.innerText = "⏳ 正在為您設計專屬食譜...";
     btn.disabled = true;
 
-    // 隨機 Seed 防止生成重複選單
-    const randomSeed = Math.floor(Math.random() * 10000);
+    // 隨機 Seed 避免每次生成的菜單重複
+    const randomSeed = Math.floor(Math.random() * 100000);
 
-    const prompt = `你是一位專業的健身營養師。請為使用者設計一份「一日健康飲食菜單」（包含早餐、午餐、晚餐、點心）。
+    const prompt = `你是一位專業的營養師。請為使用者設計一份「一日健康飲食菜單」（包含早餐、午餐、晚餐、點心）。
 要求如下：
 1. 每日總目標熱量：約 ${targetCal} kcal。
 2. 三大營養素目標：蛋白質 ${targetP}g、碳水化合物 ${targetC}g、脂肪 ${targetF}g。
@@ -202,7 +210,7 @@ async function generateDailyMenu(e) {
         }
     } catch (err) {
         console.error(err);
-        alert("菜單生成失敗，請檢查網路或 API Key。");
+        alert("菜單生成失敗，請確認網路連線與 API Key 是否正確。");
     } finally {
         btn.innerText = originalText;
         btn.disabled = false;
@@ -227,7 +235,7 @@ function previewImage(event) {
 // 呼叫 Gemini 辨識食物
 async function analyzeFoodImage(e) {
     const apiKey = document.getElementById('api-key').value.trim();
-    if (!apiKey) return alert("請輸入 Gemini API Key！");
+    if (!apiKey) return alert("請先輸入 Gemini API Key！");
     if (!base64Image) return alert("請先選擇或上傳食物照片！");
 
     const btn = e ? e.target : document.querySelector("button[onclick*='analyzeFoodImage']");
@@ -418,7 +426,11 @@ function renderCharts() {
 // 4. AI 月度健康診斷
 async function generateMonthlyDiagnosis(e) {
     const apiKey = document.getElementById('api-key').value.trim();
-    if (!apiKey) return alert("請先於 Tab 2 輸入你的 Gemini API Key！");
+    if (!apiKey) {
+        alert("⚠️ 請先前往「2. AI 照片辨識與紀錄」分頁輸入你的 Gemini API Key！");
+        switchTab(1);
+        return;
+    }
 
     const month = document.getElementById('diag-month').value;
     if (!month) return alert("請選擇分析月份！");
