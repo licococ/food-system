@@ -47,7 +47,7 @@ function switchTab(index) {
     }
 }
 
-// 1. 計算 BMI 與 TDEE，並根據 BMI 自動判定給予熱量建議（已加入範圍防呆）
+// 1. 計算 BMI 與 TDEE，並根據 BMI 自動判定給予熱量建議（含防呆驗證）
 function calculateHealth() {
     const genderEl = document.querySelector('input[name="gender"]:checked');
     if (!genderEl) return;
@@ -62,26 +62,18 @@ function calculateHealth() {
     const age = parseInt(ageInput?.value) || 0;
     const activity = parseFloat(document.getElementById('activity')?.value) || 1.2;
 
-    // --- 輸入數值驗證 (防呆機制) ---
     // 身高限制：50 ~ 250 公分
     if (height < 50 || height > 250) {
-        if (heightInput && heightInput.value !== "") {
-            // alert("身高請輸入 50 至 250 公分之間的數值！");
-            resetOutputs();
-        }
+        if (heightInput && heightInput.value !== "") resetOutputs();
         return;
     }
 
-    // 年齡限制：1 ~ 120 歲 (0歲以上且不超過120歲)
+    // 年齡限制：1 ~ 120 歲
     if (age <= 0 || age > 120) {
-        if (ageInput && ageInput.value !== "") {
-            // alert("年齡請輸入 1 至 120 歲之間的數值！");
-            resetOutputs();
-        }
+        if (ageInput && ageInput.value !== "") resetOutputs();
         return;
     }
 
-    // 體重未輸入時也不進行計算
     if (!weight) {
         resetOutputs();
         return;
@@ -95,7 +87,7 @@ function calculateHealth() {
     const bmiBadge = document.getElementById('bmi-badge');
     const bmiAdvice = document.getElementById('bmi-advice');
 
-    // 2. 計算 BMR (Mifflin-St Jeor 公式) 與 TDEE
+    // 2. 計算 BMR 與 TDEE
     let bmr = (10 * weight) + (6.25 * height) - (5 * age);
     bmr += (gender === '男') ? 5 : -161;
     const tdee = Math.round(bmr * activity);
@@ -104,25 +96,25 @@ function calculateHealth() {
         document.getElementById('tdee-val').innerText = tdee;
     }
 
-    // 3. 根據 BMI 自動判定建議熱量 (Auto-adjust calories based on BMI)
+    // 3. 根據 BMI 自動判定建議熱量
     let targetCal = tdee;
 
     if (bmi < 18.5) {
         if (bmiBadge) { bmiBadge.innerText = "體重過輕"; bmiBadge.style.background = "#3498db"; }
         if (bmiAdvice) bmiAdvice.innerText = "建議適度增加熱量與蛋白質攝取，已為您自動規劃溫和增肌目標 (+300 kcal)。";
-        targetCal = tdee + 300; // 自動增肌 +300
+        targetCal = tdee + 300;
     } else if (bmi < 24) {
         if (bmiBadge) { bmiBadge.innerText = "健康體位"; bmiBadge.style.background = "#2ecc71"; }
         if (bmiAdvice) bmiAdvice.innerText = "太棒了！你的體重處於理想範圍，請繼續保持均衡飲食與運動！";
-        targetCal = tdee;       // 維持體重
+        targetCal = tdee;
     } else if (bmi < 27) {
         if (bmiBadge) { bmiBadge.innerText = "體重過重"; bmiBadge.style.background = "#f39c12"; }
         if (bmiAdvice) bmiAdvice.innerText = "建議稍微控管每日總熱量，已為您自動規劃溫和減脂目標 (-300 kcal)。";
-        targetCal = tdee - 300; // 自動減脂 -300
+        targetCal = tdee - 300;
     } else {
         if (bmiBadge) { bmiBadge.innerText = "肥胖"; bmiBadge.style.background = "#e74c3c"; }
         if (bmiAdvice) bmiAdvice.innerText = "建議控管每日總熱量，已為您自動規劃積極減脂目標 (-500 kcal)。";
-        targetCal = tdee - 500; // 自動減脂 -500
+        targetCal = tdee - 500;
     }
 
     // 4. 更新畫面上的建議熱量與三大營養素
@@ -135,11 +127,10 @@ function calculateHealth() {
     if (document.getElementById('target-c')) document.getElementById('target-c').innerText = Math.round((targetCal * 0.45) / 4);
     if (document.getElementById('target-f')) document.getElementById('target-f').innerText = Math.round((targetCal * 0.30) / 9);
 
-    // 5. 即時更新圖表
     renderCharts();
 }
 
-// 輔助函式：當輸入無效數值時，重置顯示區域
+// 防呆重置顯示區域
 function resetOutputs() {
     if (document.getElementById('bmi-val')) document.getElementById('bmi-val').innerText = "--";
     if (document.getElementById('tdee-val')) document.getElementById('tdee-val').innerText = "--";
@@ -149,6 +140,73 @@ function resetOutputs() {
     if (document.getElementById('target-f')) document.getElementById('target-f').innerText = "--";
     if (document.getElementById('bmi-badge')) document.getElementById('bmi-badge').innerText = "數據無效";
     if (document.getElementById('bmi-advice')) document.getElementById('bmi-advice').innerText = "請輸入有效的年齡 (1~120) 與身高 (50~250 cm)。";
+}
+
+// 💥 新增功能：依照每日目標自動生成不重複的一日菜單 💥
+async function generateDailyMenu(e) {
+    const apiKey = document.getElementById('api-key')?.value.trim();
+    if (!apiKey) return alert("請先於 Tab 2 輸入你的 Gemini API Key！");
+
+    const targetCal = document.getElementById('target-cal')?.innerText;
+    const targetP = document.getElementById('target-p')?.innerText;
+    const targetC = document.getElementById('target-c')?.innerText;
+    const targetF = document.getElementById('target-f')?.innerText;
+
+    if (!targetCal || targetCal === "--") {
+        return alert("請先在左側輸入正確的身高、體重與年齡！");
+    }
+
+    const btn = e ? e.target : document.querySelector("button[onclick*='generateDailyMenu']");
+    const originalText = btn.innerText;
+    btn.innerText = "⏳ 正在為您設計專屬食譜...";
+    btn.disabled = true;
+
+    // 隨機 Seed 防止生成重複選單
+    const randomSeed = Math.floor(Math.random() * 10000);
+
+    const prompt = `你是一位專業的健身營養師。請為使用者設計一份「一日健康飲食菜單」（包含早餐、午餐、晚餐、點心）。
+要求如下：
+1. 每日總目標熱量：約 ${targetCal} kcal。
+2. 三大營養素目標：蛋白質 ${targetP}g、碳水化合物 ${targetC}g、脂肪 ${targetF}g。
+3. 菜單食材必須均衡多樣，且每一餐的食材【嚴禁重複】。
+4. 請列出每餐的：餐點名稱、估算熱量(kcal)、蛋白質(g)、碳水(g)、脂肪(g) 以及簡短備餐說明。
+5. 隨機風格參數：${randomSeed}（每次生成請給予不同的菜餚搭配組合）。
+
+請直接輸出條列式結果，語氣親切專業。`;
+
+    try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+            })
+        });
+
+        const data = await res.json();
+        
+        if (data.error) {
+            alert(`API 錯誤：${data.error.message}`);
+            return;
+        }
+
+        const menuText = data.candidates[0].content.parts[0].text;
+        
+        const menuResult = document.getElementById('menu-result');
+        const menuContent = document.getElementById('menu-content');
+        
+        if (menuResult && menuContent) {
+            menuContent.innerText = menuText;
+            menuResult.style.display = 'block';
+            menuResult.scrollIntoView({ behavior: 'smooth' });
+        }
+    } catch (err) {
+        console.error(err);
+        alert("菜單生成失敗，請檢查網路或 API Key。");
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
 }
 
 // 2. 照片預覽與 Base64 轉換
@@ -268,7 +326,7 @@ function saveFoodLog() {
     renderCharts();
 }
 
-// 3. 渲染 Plotly 圖表 (自適應排版修正)
+// 3. 渲染 Plotly 圖表
 function renderCharts() {
     const viewDateEl = document.getElementById('view-date');
     if (!viewDateEl) return;
@@ -311,7 +369,7 @@ function renderCharts() {
         margin: { t: 40, b: 40, l: 10, r: 10 },
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(0,0,0,0)',
-        legend: { orientation: 'h', y: -0.15 } // 圖例置於下方
+        legend: { orientation: 'h', y: -0.15 }
     };
 
     if (document.getElementById('pie-chart')) {
@@ -349,7 +407,7 @@ function renderCharts() {
         margin: { t: 40, b: 40, l: 35, r: 10 },
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(0,0,0,0)',
-        legend: { orientation: 'h', y: -0.25 } // 圖例置於下方
+        legend: { orientation: 'h', y: -0.25 }
     };
 
     if (document.getElementById('bar-chart')) {
