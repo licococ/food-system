@@ -47,18 +47,45 @@ function switchTab(index) {
     }
 }
 
-// 1. 計算 BMI 與 TDEE，並根據 BMI 自動判定給予熱量建議
+// 1. 計算 BMI 與 TDEE，並根據 BMI 自動判定給予熱量建議（已加入範圍防呆）
 function calculateHealth() {
     const genderEl = document.querySelector('input[name="gender"]:checked');
     if (!genderEl) return;
     const gender = genderEl.value;
     
-    const height = parseFloat(document.getElementById('height')?.value) || 0;
-    const weight = parseFloat(document.getElementById('weight')?.value) || 0;
-    const age = parseInt(document.getElementById('age')?.value) || 0;
+    const heightInput = document.getElementById('height');
+    const weightInput = document.getElementById('weight');
+    const ageInput = document.getElementById('age');
+
+    const height = parseFloat(heightInput?.value) || 0;
+    const weight = parseFloat(weightInput?.value) || 0;
+    const age = parseInt(ageInput?.value) || 0;
     const activity = parseFloat(document.getElementById('activity')?.value) || 1.2;
 
-    if (!height || !weight || !age) return;
+    // --- 輸入數值驗證 (防呆機制) ---
+    // 身高限制：50 ~ 250 公分
+    if (height < 50 || height > 250) {
+        if (heightInput && heightInput.value !== "") {
+            // alert("身高請輸入 50 至 250 公分之間的數值！");
+            resetOutputs();
+        }
+        return;
+    }
+
+    // 年齡限制：1 ~ 120 歲 (0歲以上且不超過120歲)
+    if (age <= 0 || age > 120) {
+        if (ageInput && ageInput.value !== "") {
+            // alert("年齡請輸入 1 至 120 歲之間的數值！");
+            resetOutputs();
+        }
+        return;
+    }
+
+    // 體重未輸入時也不進行計算
+    if (!weight) {
+        resetOutputs();
+        return;
+    }
 
     // 1. 計算 BMI
     const bmi = parseFloat((weight / ((height / 100) ** 2)).toFixed(1));
@@ -110,6 +137,18 @@ function calculateHealth() {
 
     // 5. 即時更新圖表
     renderCharts();
+}
+
+// 輔助函式：當輸入無效數值時，重置顯示區域
+function resetOutputs() {
+    if (document.getElementById('bmi-val')) document.getElementById('bmi-val').innerText = "--";
+    if (document.getElementById('tdee-val')) document.getElementById('tdee-val').innerText = "--";
+    if (document.getElementById('target-cal')) document.getElementById('target-cal').innerText = "--";
+    if (document.getElementById('target-p')) document.getElementById('target-p').innerText = "--";
+    if (document.getElementById('target-c')) document.getElementById('target-c').innerText = "--";
+    if (document.getElementById('target-f')) document.getElementById('target-f').innerText = "--";
+    if (document.getElementById('bmi-badge')) document.getElementById('bmi-badge').innerText = "數據無效";
+    if (document.getElementById('bmi-advice')) document.getElementById('bmi-advice').innerText = "請輸入有效的年齡 (1~120) 與身高 (50~250 cm)。";
 }
 
 // 2. 照片預覽與 Base64 轉換
