@@ -133,7 +133,7 @@ function resetOutputs() {
     if (document.getElementById('bmi-advice')) document.getElementById('bmi-advice').innerText = "請輸入有效的年齡 (1~120) 與身高 (50~250 cm)。";
 }
 
-// 🥗 生成一日菜單 (含 Markdown 解析)
+// 🥗 生成一日菜單 (包含 Markdown HTML 轉換)
 async function generateDailyMenu(e) {
     const apiKey = document.getElementById('api-key')?.value.trim();
     
@@ -169,7 +169,7 @@ async function generateDailyMenu(e) {
 4. 請列出每餐的：餐點名稱、估算熱量(kcal)、蛋白質(g)、碳水(g)、脂肪(g) 以及簡短備餐說明。
 5. 隨機風格參數：${randomSeed}（每次生成請給予不同的菜餚搭配組合）。
 
-請使用清楚的 Markdown 格式輸出結果，語氣親切專業。`;
+請使用清楚的 Markdown 格式（可以包含表格、標題、粗體）輸出結果，語氣親切專業。`;
 
     try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
@@ -193,7 +193,7 @@ async function generateDailyMenu(e) {
         const menuContent = document.getElementById('menu-content');
         
         if (menuResult && menuContent) {
-            // 使用 marked 將 Markdown 轉換為高質感 HTML
+            // 💥 核心：用 marked.parse 轉成 HTML 並塞入 innerHTML
             if (typeof marked !== 'undefined') {
                 menuContent.innerHTML = marked.parse(menuText);
             } else {
