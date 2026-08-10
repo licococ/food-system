@@ -1,63 +1,88 @@
-/* 全域設定 */
+/* 🥗 NOURISH AI - 全域莫蘭迪質感風格 */
+:root {
+    --primary: #2D3B2D;
+    --primary-light: #7A8B7B;
+    --accent: #A3B18A;
+    --bg-warm: #F4F3EF;
+    --card-bg: #FFFFFF;
+    --text-main: #2D3B2D;
+    --text-muted: #6B7280;
+    --border-color: #E2E8E0;
+    --shadow: 0 4px 20px rgba(45, 59, 45, 0.05);
+}
+
 * {
     box-sizing: border-box;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 body {
-    background-color: #F7F7F2;
-    color: #2D3B2D;
+    background-color: var(--bg-warm);
+    color: var(--text-main);
     margin: 0;
     padding: 20px;
+    display: flex;
+    justify-content: center;
 }
 
 .container {
+    width: 100%;
     max-width: 1000px;
-    margin: 0 auto;
 }
 
-/* 品牌 Header */
+/* Header 品牌區域 */
 .brand-header {
-    margin-bottom: 25px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #E5E7EB;
 }
 
 .brand-title {
     font-size: 1.8rem;
     font-weight: 800;
-    color: #2D3B2D;
+    color: var(--primary);
+    letter-spacing: -0.5px;
 }
 
 .brand-desc {
-    color: #6B7B6C;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
     margin-top: 4px;
 }
 
-/* Tab 選單 */
+/* Tab 頁籤選單 */
 .tabs {
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
-    flex-wrap: wrap;
+    overflow-x: auto;
+    padding-bottom: 5px;
 }
 
 .tab-btn {
-    background: #EAEBE4;
+    padding: 10px 18px;
     border: none;
-    padding: 12px 20px;
     border-radius: 12px;
-    cursor: pointer;
+    background: #EAEBE4;
+    color: var(--primary);
     font-weight: 600;
-    color: #556055;
+    font-size: 0.95rem;
+    cursor: pointer;
     transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.tab-btn:hover {
+    background: #DDE0D5;
 }
 
 .tab-btn.active {
-    background: #2D3B2D;
-    color: #FFF;
+    background: var(--primary);
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(45, 59, 45, 0.2);
 }
 
 .tab-content {
@@ -68,125 +93,139 @@ body {
     display: block;
 }
 
-/* 卡片與佈局 */
-.grid-2 {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 20px;
-}
-
+/* 卡片與排版架構 */
 .card {
-    background: #FFFFFF;
-    padding: 24px;
+    background: var(--card-bg);
     border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    padding: 24px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
 }
 
 .warm-box {
-    background: #EFEFE8;
-    padding: 24px;
+    background: #EBECE4;
     border-radius: 16px;
-    border: 1px solid #D8D8CF;
+    padding: 24px;
+    border: 1px solid #D5D8CA;
+}
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 768px) {
+    .grid-2 {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* 表單元件 */
 .form-group {
-    margin-bottom: 16px;
+    margin-bottom: 15px;
 }
 
 .form-group label {
     display: block;
     font-weight: 600;
+    font-size: 0.88rem;
     margin-bottom: 6px;
-    font-size: 0.9rem;
-    color: #4A584A;
+    color: var(--primary);
 }
 
-input[type="text"],
-input[type="number"],
-input[type="password"],
-input[type="date"],
-input[type="month"],
-select {
+.form-group input, .form-group select {
     width: 100%;
     padding: 10px 14px;
-    border: 1px solid #D0D5CE;
-    border-radius: 10px;
-    background: #FAFAFA;
+    border-radius: 8px;
+    border: 1px solid #D1D5DB;
     font-size: 0.95rem;
     outline: none;
+    transition: border 0.2s;
+}
+
+.form-group input:focus, .form-group select:focus {
+    border-color: var(--primary);
 }
 
 .form-row {
     display: flex;
-    gap: 12px;
+    gap: 10px;
+}
+
+.form-row .form-group {
+    flex: 1;
 }
 
 .radio-group {
     display: flex;
-    gap: 15px;
+    gap: 20px;
+    padding: 8px 0;
 }
 
-.radio-group label {
-    font-weight: normal;
-    cursor: pointer;
-}
-
-/* 按鈕 */
+/* 按鈕美化 */
 .btn {
     width: 100%;
-    background: #2D3B2D;
+    padding: 12px;
+    background: var(--primary);
     color: white;
     border: none;
-    padding: 14px;
-    border-radius: 12px;
+    border-radius: 10px;
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background 0.2s, transform 0.1s;
 }
 
 .btn:hover {
-    background: #3E4E3E;
+    background: #3A4C3A;
+}
+
+.btn:active {
+    transform: scale(0.99);
 }
 
 .btn:disabled {
-    background: #A0A8A0;
+    background: #A0A0A0;
     cursor: not-allowed;
 }
 
-/* 指標與 Badge */
+/* BMI 與狀態標籤 */
 .bmi-badge {
-    font-size: 0.85rem;
+    display: inline-block;
     padding: 4px 10px;
     border-radius: 20px;
     color: white;
-    vertical-align: middle;
+    font-size: 0.85rem;
+    font-weight: 600;
     margin-left: 8px;
+    vertical-align: middle;
 }
 
 .advice-box {
     font-size: 0.9rem;
-    color: #4A584A;
+    color: #4A5568;
     line-height: 1.5;
-    margin: 8px 0 0 0;
+    margin-top: 8px;
 }
 
+/* 三步驟說明卡 */
 .step-card {
     display: flex;
     align-items: center;
     gap: 12px;
-    background: #F4F5F0;
+    background: #F8F9F6;
     padding: 10px 14px;
     border-radius: 10px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .step-number {
-    background: #2D3B2D;
-    color: white;
     width: 24px;
     height: 24px;
+    background: var(--primary);
+    color: white;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -196,85 +235,118 @@ select {
 }
 
 .step-title {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
+    color: var(--primary);
     font-weight: 600;
 }
 
+/* ⚡ 常用食物快捷按鈕美化 */
+.quick-food-section {
+    padding: 12px;
+    background: #F8F9F6;
+    border-radius: 12px;
+    border: 1px solid #E2E8E0;
+}
+
+.quick-btn {
+    background: #EAEBE4;
+    color: #2D3B2D;
+    border: 1px solid #C2C69D;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.quick-btn:hover {
+    background: #2D3B2D;
+    color: #FFFFFF;
+    border-color: #2D3B2D;
+    transform: translateY(-1px);
+}
+
+/* 數據卡片 (Metrics Grid) */
 .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+@media (max-width: 600px) {
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 .metric-card {
-    background: #F4F5F0;
+    background: #F8F9F6;
     padding: 15px;
     border-radius: 12px;
     text-align: center;
+    border: 1px solid #E5E7EB;
 }
 
 .metric-card h4 {
-    margin: 0;
-    font-size: 0.85rem;
-    color: #6B7B6C;
+    margin: 0 0 6px 0;
+    font-size: 0.82rem;
+    color: var(--text-muted);
 }
 
 .metric-card p {
-    margin: 6px 0 0 0;
-    font-size: 1.3rem;
-    font-weight: bold;
-}
-
-.chart-box {
-    width: 100%;
-    min-height: 320px;
-}
-
-/* 🥗 AI 菜單 / 報告 Markdown 美化排版 */
-#menu-content, #diag-content {
-    color: #2D3B2D;
-    line-height: 1.8;
-}
-
-#menu-content h1, #menu-content h2, #menu-content h3,
-#diag-content h1, #diag-content h2, #diag-content h3 {
-    color: #2D3B2D;
-    border-bottom: 2px solid #C2C69D;
-    padding-bottom: 6px;
-    margin-top: 20px;
-    margin-bottom: 12px;
+    margin: 0;
     font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--primary);
 }
 
-#menu-content h4, #diag-content h4 {
-    color: #3E4E3E;
-    margin-top: 14px;
-    margin-bottom: 6px;
-    font-size: 1.05rem;
+/* 📊 解決圖表爆版與自適應問題 */
+.chart-box {
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    width: 100%;
+    min-width: 0; /* 防止 Grid 爆開 */
+    box-sizing: border-box;
+    overflow: hidden; /* 防止 SVG 超出邊界 */
 }
 
-#menu-content hr, #diag-content hr {
-    border: 0;
-    height: 1px;
-    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), #C2C69D, rgba(0, 0, 0, 0));
-    margin: 20px 0;
+.js-plotly-plot, .plot-container {
+    width: 100% !important;
 }
 
-#menu-content ul, #menu-content ol,
-#diag-content ul, #diag-content ol {
-    padding-left: 22px;
-    margin-bottom: 14px;
+/* 🥗 Markdown 表格與內容美化 */
+#menu-content table, #diag-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.9rem;
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-#menu-content li, #diag-content li {
-    margin-bottom: 6px;
+#menu-content th, #diag-content th {
+    background-color: #2D3B2D;
+    color: #ffffff;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
 }
 
-#menu-content strong, #diag-content strong {
-    color: #1E281E;
-    font-weight: 700;
+#menu-content td, #diag-content td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #EAEBE4;
+    color: #2D3B2D;
 }
 
-#menu-content p, #diag-content p {
-    margin-bottom: 12px;
+#menu-content tr:nth-child(even), #diag-content tr:nth-child(even) {
+    background-color: #F9F9F6;
+}
+
+#menu-content tr:hover, #diag-content tr:hover {
+    background-color: #F0F2EB;
 }
